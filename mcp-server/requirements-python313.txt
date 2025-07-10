@@ -1,0 +1,33 @@
+# Requirements for Python 3.13 compatibility
+# Updated versions that support Python 3.13
+
+# Core Framework
+mcp[cli]>=1.10.1
+pydantic>=2.11.7
+
+# Data Processing & Analysis
+pandas>=2.2.0
+numpy>=2.1.0
+pyarrow>=20.0.0
+
+# Data Science & Machine Learning
+scikit-learn>=1.7.0
+scipy>=1.15.0
+pyod>=2.0.5
+
+# Data Quality & Monitoring
+evidently>=0.7.9
+# ydata-profiling doesn't support Python 3.13 yet, using alternative
+pandas-profiling>=3.2.0
+missingno>=0.5.2
+
+# Visualization
+matplotlib>=3.10.0
+seaborn>=0.13.0
+plotly>=5.24.0
+
+# Development & Environment
+python-dateutil>=2.9.0
+
+# Additional dependencies for Python 3.13
+typing-extensions>=4.8.0 

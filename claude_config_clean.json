@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "deepline-eda": {
+      "command": "C:\\Users\\Taimo\\OneDrive\\Documents\\GitHub\\Deepline\\mcp-server\\venv\\Scripts\\python.exe",
+      "args": ["launch_server.py"],
+      "cwd": "C:\\Users\\Taimo\\OneDrive\\Documents\\GitHub\\Deepline\\mcp-server"
+    }
+  }
+} 

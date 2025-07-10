@@ -13,20 +13,34 @@ Tools:
 • detect_outliers
 """
 
+import sys
+
+# Add debug output to stderr so Claude Desktop can see it
+def debug_print(message):
+    print(f"[MCP-SERVER] {message}", file=sys.stderr)
+    sys.stderr.flush()
+
+debug_print("Initializing MCP server...")
+
 from typing import Dict, Literal
 from pathlib import Path
 import io, base64, tempfile, asyncio, json, re
 
+debug_print("Importing pandas and numpy...")
 import pandas as pd
 import numpy as np
+
+debug_print("Importing matplotlib and seaborn...")
 import matplotlib.pyplot as plt
 import missingno as msno
 import seaborn as sns
 import yaml
 
+debug_print("Importing MCP modules...")
 from mcp.server import FastMCP
 from mcp.types import TextContent, ImageContent
 
+debug_print("Importing evidently...")
 from evidently import (
     DataDefinition, Dataset, Report,
     BinaryClassification, MulticlassClassification, Regression
@@ -36,6 +50,7 @@ from evidently.presets import (
 )
 from pydantic import BaseModel
 
+debug_print("Importing sklearn...")
 from sklearn.metrics import (
     accuracy_score,
     precision_recall_fscore_support,
@@ -49,16 +64,20 @@ try:
     from pyod.models.iforest import IsolationForest
     from pyod.models.lof import LOF
     PYOD_AVAILABLE = True
+    debug_print("pyod imported successfully")
 except ImportError:
     PYOD_AVAILABLE = False
-    print("Warning: pyod not available. Model-based outlier detection will not work.")
+    debug_print("Warning: pyod not available. Model-based outlier detection will not work.")
 
 # Initialize FastMCP server
+debug_print("Creating FastMCP server instance...")
 mcp = FastMCP("data-science-eda")
 
 # Data store and lock for thread safety
 data_store: Dict[str, pd.DataFrame] = {}
 store_lock = asyncio.Lock()
+
+debug_print("MCP server initialization complete")
 
 # --- Schema inference models -------------------------------------------------
 class SchemaColumn(BaseModel):
