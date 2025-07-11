@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Play, Pause, Activity, Database, Settings, Cpu, TrendingUp, Package, Brain, AlertCircle, CheckCircle, XCircle, ChevronRight, Users, Zap, FileText, BarChart3 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Play, Pause, Activity, Database, Settings, Cpu, TrendingUp, Package, Brain, AlertCircle, CheckCircle, XCircle, ChevronRight, Users, Zap, BarChart3 } from 'lucide-react';
 import './App.css';
 
 function App() {
