@@ -39,6 +39,24 @@ Your Claude Desktop will automatically detect the server. Start with:
 "Load the iris.csv dataset and show me basic info"
 ```
 
+### **4. Launch Infrastructure (Optional)**
+For advanced workflows with multi-agent orchestration:
+```powershell
+# Start Kafka, MongoDB, and Dashboard
+docker-compose up -d
+
+# Start Dashboard Backend (in new terminal)
+cd dashboard/backend
+python main.py
+
+# Start Dashboard Frontend (in new terminal)
+cd dashboard/dashboard-frontend
+npm install
+npm start
+```
+
+Access the dashboard at: `http://localhost:3000`
+
 ---
 
 ## 📊 **What This Does**
@@ -87,6 +105,32 @@ Deepline transforms your data science workflow by providing **17 powerful tools*
                                                │  • Viz Tools     │
                                                └─────────────────┘
 ```
+
+## 🔧 **Infrastructure Components**
+
+### **🚀 Messaging Backbone: Kafka (Local)**
+- **Apache Kafka**: High-throughput event streaming for inter-component communication
+- **Zookeeper**: Coordination service for Kafka cluster management
+- **Topics**: `workflow.commands`, `task.requests`, `task.events`
+- **Docker Compose**: Zero-cost local deployment
+
+### **🗄️ Persistent Storage: MongoDB (Local)**
+- **MongoDB 6.0**: Document database for workflow and task metadata
+- **Motor Driver**: Async Python driver for high-performance operations
+- **Collections**: `runs`, `tasks`, `workflows`, `agents`
+- **Automatic Indexing**: Optimized queries on `run_id` and `task_id`
+
+### **☸️ Container Orchestration: Kubernetes (Local)**
+- **Kind Cluster**: Local Kubernetes development environment
+- **Resource Quotas**: CPU and memory limits for cost control
+- **Agent Deployment**: Containerized agent instances
+- **Parallel Execution**: Multi-agent workflow processing
+
+### **📊 Observability Dashboard**
+- **FastAPI Backend**: REST API with WebSocket support for real-time events
+- **React Frontend**: Interactive dashboard with live agent monitoring
+- **Real-time Updates**: Live event streaming and agent status tracking
+- **Workflow Management**: Visual workflow templates and execution control
 
 ---
 
@@ -261,7 +305,7 @@ You should see the server respond with data analysis results.
 
 ```
 deepline/
-├── mcp-server/
+├── mcp-server/                      # Core MCP Server
 │   ├── server.py                    # Main MCP server (17 tools)
 │   ├── launch_server.py             # Server launcher
 │   ├── verify_setup.py              # Setup verification
@@ -271,12 +315,99 @@ deepline/
 │   ├── requirements-python313.txt   # Python dependencies
 │   ├── iris.csv                     # Sample dataset
 │   └── reports/                     # Generated reports
+├── dashboard/                       # Observability Dashboard
+│   ├── backend/
+│   │   └── main.py                  # FastAPI server with WebSocket
+│   ├── dashboard-frontend/          # React dashboard
+│   │   ├── src/
+│   │   │   ├── App.js              # Main dashboard component
+│   │   │   └── App.css             # Dashboard styling
+│   │   └── package.json            # Frontend dependencies
+│   └── README.md                    # Dashboard documentation
+├── docker-compose.yml               # Kafka, MongoDB, infrastructure
+├── resource-quota.yaml              # Kubernetes resource limits
 ├── docs/                            # Documentation
 ├── tests/                           # Test files
 ├── LICENSE-APACHE                   # SDK/Client license
 ├── LICENSE-BUSL                     # Core license
 └── README.md                        # This file
 ```
+
+---
+
+## 🏗️ **Infrastructure Setup**
+
+### **🐳 Docker Infrastructure**
+```powershell
+# Start all infrastructure services
+docker-compose up -d
+
+# Verify services are running
+docker-compose ps
+
+# Check service logs
+docker-compose logs kafka
+docker-compose logs mongo
+```
+
+### **📊 Dashboard Setup**
+```powershell
+# Backend setup (Terminal 1)
+cd dashboard/backend
+pip install fastapi uvicorn motor confluent-kafka
+python main.py
+
+# Frontend setup (Terminal 2)
+cd dashboard/dashboard-frontend
+npm install
+npm start
+```
+
+### **☸️ Kubernetes Setup (Optional)**
+```powershell
+# Install kind (if not already installed)
+# Windows: choco install kind
+# Linux: curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64
+
+# Create local cluster
+kind create cluster --name deepline
+
+# Apply resource quota
+kubectl apply -f resource-quota.yaml
+
+# Verify cluster
+kubectl get nodes
+kubectl get quota
+```
+
+### **🔧 Kafka Topic Management**
+```powershell
+# Create topics manually (if needed)
+docker exec -it $(docker ps -qf "ancestor=confluentinc/cp-kafka") bash
+kafka-topics --create --topic workflow.commands --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+kafka-topics --create --topic task.requests --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+kafka-topics --create --topic task.events --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+exit
+```
+
+### **🗄️ MongoDB Initialization**
+```powershell
+# Connect to MongoDB
+docker exec -it $(docker ps -qf "ancestor=mongo:6.0") mongo
+
+# Create indexes for performance
+use deepline
+db.runs.createIndex({ run_id: 1 })
+db.tasks.createIndex({ run_id: 1, task_id: 1 })
+exit
+```
+
+### **📈 Dashboard Features**
+- **Multi-Agent Workflow Management**: Start and monitor complex workflows
+- **Real-time Agent Status**: Live updates of agent states and activities
+- **Interactive Charts**: Visual representation of event activity
+- **Workflow Templates**: Pre-configured workflows for common tasks
+- **Live Event Streaming**: Real-time event monitoring via WebSocket
 
 ---
 
@@ -351,10 +482,57 @@ $env:DEBUG = "true"
 python launch_server.py
 ```
 
+### **Infrastructure Issues**
+
+#### **❌ "Docker services not starting"**
+```powershell
+# Check Docker is running
+docker --version
+
+# Reset Docker Compose
+docker-compose down
+docker-compose up -d
+
+# Check service health
+docker-compose ps
+```
+
+#### **❌ "Kafka connection failed"**
+```powershell
+# Verify Kafka is accessible
+docker exec -it $(docker ps -qf "ancestor=confluentinc/cp-kafka") bash
+kafka-topics --list --bootstrap-server localhost:9092
+exit
+```
+
+#### **❌ "MongoDB connection refused"**
+```powershell
+# Check MongoDB status
+docker exec -it $(docker ps -qf "ancestor=mongo:6.0") mongo --eval "db.adminCommand('ping')"
+```
+
+#### **❌ "Dashboard not loading"**
+```powershell
+# Check backend is running
+curl http://localhost:8000/
+
+# Check frontend dependencies
+cd dashboard/dashboard-frontend
+npm install
+npm start
+```
+
+#### **❌ "WebSocket connection failed"**
+```powershell
+# Verify WebSocket endpoint
+curl -H "Connection: Upgrade" -H "Upgrade: websocket" http://localhost:8000/ws/events
+```
+
 ### **Get Help**
 - **Check logs**: Look in `reports/` directory for error logs
 - **Run diagnostics**: `python verify_setup.py`
 - **Test tools individually**: Use test files in project root
+- **Infrastructure logs**: `docker-compose logs [service-name]`
 
 ---
 
@@ -458,15 +636,22 @@ See [LICENSE.md](LICENSE.md) for complete details.
 - Automated quality scoring and recommendations
 - Interactive HTML reports with Evidently
 
-### **Phase 3: 🚧 Advanced Analytics** 
+### **Phase 3: ✅ Infrastructure & Orchestration**
+- Kafka messaging backbone for event streaming
+- MongoDB persistent storage for workflow metadata
+- Kubernetes support for container orchestration
+- Real-time observability dashboard with multi-agent workflow management
+
+### **Phase 4: 🚧 Advanced Analytics** 
 - Feature engineering and transformation
 - Model training and evaluation
 - Automated ML pipeline integration
 
-### **Phase 4: 🔄 Production Ready**
-- Real-time monitoring and alerting
+### **Phase 5: 🔄 Production Ready**
+- Advanced multi-agent orchestration
 - API endpoints for external integration
-- Scalable deployment options
+- Scalable cloud deployment options
+- Advanced monitoring and alerting
 
 ---
 
