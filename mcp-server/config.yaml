@@ -1,6 +1,20 @@
 # EDA Server Configuration
 # All thresholds and parameters centralized for easy tuning
 
+# Orchestrator Configuration
+orchestrator:
+  max_concurrent_workflows: 1
+  retry:
+    max_retries: 3
+    backoff_base_s: 30
+    backoff_max_s: 300
+  scheduling:
+    sla_task_complete_s: 600      # 10 minutes
+    sla_workflow_complete_s: 3600 # 1 hour
+  workload_estimate:
+    tasks_per_hour: 30
+    avg_task_duration_s: 240      # 4 minutes
+
 # Missing Data Analysis
 missing_data:
   column_drop_threshold: 0.50  # 50% - drop columns with >50% missing data

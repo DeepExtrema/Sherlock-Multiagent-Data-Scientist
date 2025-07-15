@@ -132,6 +132,20 @@ Deepline transforms your data science workflow by providing **17 powerful tools*
 - **Real-time Updates**: Live event streaming and agent status tracking
 - **Workflow Management**: Visual workflow templates and execution control
 
+### **⚙️ Orchestrator & Workload Management**
+- **Concurrency Control**: Global workflow limits (configurable, default 1 concurrent workflow)
+- **Intelligent Retry Logic**: Exponential backoff with configurable max retries (3) and delays (30-300s)
+- **SLA Monitoring**: Automated detection of stale tasks (10min) and workflows (1hr) with real-time alerts
+- **Workload Estimation**: Pre-configured capacity planning (30 tasks/hour, 4min avg duration)
+- **Quality Gates**: Automatic workflow throttling prevents system overload
+- **Real-time Alerting**: Live SLA violation notifications via WebSocket dashboard
+
+**Benefits:**
+- **System Stability**: Prevents resource exhaustion through controlled concurrency
+- **Reliability**: Automatic retry with smart backoff reduces transient failures  
+- **Observability**: Proactive SLA monitoring catches performance issues early
+- **Predictability**: Workload estimates enable better capacity planning
+
 ---
 
 ## 🛠️ **Installation Guide**
@@ -299,6 +313,12 @@ You should see the server respond with data analysis results.
 - **VIF analysis** for multicollinearity detection
 - **Target-guided discretization**
 
+### **⚙️ Configuration Management**
+- **Centralized config.yaml** for all system parameters
+- **Orchestrator settings**: Concurrency limits, retry policies, SLA thresholds
+- **EDA parameters**: Quality thresholds, visualization limits, performance settings
+- **Hot-reloadable**: Configuration changes without server restart
+
 ---
 
 ## 🗂️ **Project Structure**
@@ -310,7 +330,7 @@ deepline/
 │   ├── launch_server.py             # Server launcher
 │   ├── verify_setup.py              # Setup verification
 │   ├── config.py                    # Configuration management
-│   ├── config.yaml                  # Tunable parameters
+│   ├── config.yaml                  # Tunable parameters (EDA + Orchestrator)
 │   ├── utils.py                     # Utility functions
 │   ├── requirements-python313.txt   # Python dependencies
 │   ├── iris.csv                     # Sample dataset

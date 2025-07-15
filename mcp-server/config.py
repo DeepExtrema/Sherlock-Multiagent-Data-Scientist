@@ -8,6 +8,25 @@ from pathlib import Path
 from typing import Dict, Any
 from pydantic import BaseModel, Field
 
+class RetryConfig(BaseModel):
+    max_retries: int = Field(3, ge=0)
+    backoff_base_s: int = Field(30, gt=0)
+    backoff_max_s: int = Field(300, gt=0)
+
+class SchedulingConfig(BaseModel):
+    sla_task_complete_s: int = Field(600, gt=0)  # 10 minutes
+    sla_workflow_complete_s: int = Field(3600, gt=0)  # 1 hour
+
+class WorkloadEstimateConfig(BaseModel):
+    tasks_per_hour: int = Field(30, gt=0)
+    avg_task_duration_s: int = Field(240, gt=0)  # 4 minutes
+
+class OrchestratorConfig(BaseModel):
+    max_concurrent_workflows: int = Field(1, gt=0)
+    retry: RetryConfig = Field(default_factory=lambda: RetryConfig())
+    scheduling: SchedulingConfig = Field(default_factory=lambda: SchedulingConfig())
+    workload_estimate: WorkloadEstimateConfig = Field(default_factory=lambda: WorkloadEstimateConfig())
+
 class MissingDataConfig(BaseModel):
     column_drop_threshold: float = Field(0.50, ge=0.0, le=1.0)
     row_drop_threshold: float = Field(0.50, ge=0.0, le=1.0)
@@ -60,6 +79,7 @@ class EDAConfig(BaseModel):
     visualization: VisualizationConfig
     performance: PerformanceConfig
     checkpoints: CheckpointsConfig
+    orchestrator: OrchestratorConfig
 
 def load_config(config_path: str = "config.yaml") -> EDAConfig:
     """
@@ -102,7 +122,12 @@ def get_config() -> EDAConfig:
             feature_transformation=FeatureTransformationConfig(),
             visualization=VisualizationConfig(),
             performance=PerformanceConfig(),
-            checkpoints=CheckpointsConfig()
+            checkpoints=CheckpointsConfig(),
+            orchestrator=OrchestratorConfig(
+                retry=RetryConfig(),
+                scheduling=SchedulingConfig(),
+                workload_estimate=WorkloadEstimateConfig()
+            )
         )
 
 # Global configuration instance
