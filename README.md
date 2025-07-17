@@ -716,7 +716,6 @@ This project uses a **Hybrid "Adoption + Protection" License**:
 - Client SDKs and libraries
 - Integration examples and documentation  
 - Testing frameworks and development tools
-- **Commercial use**: ✅ Unrestricted
 
 ### **🛡️ BUSL 1.1 - Core Server**
 - Main MCP server (`server.py`)
