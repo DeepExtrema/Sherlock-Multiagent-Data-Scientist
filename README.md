@@ -1,756 +1,760 @@
 <div align="center">
   <img src="deepline-logo.png" alt="Deepline Logo" width="200"/>
+  
+  # 🔬 **Deepline MCP Server**
+  
+  ## **AI-Powered Data Science & MLOps Platform**
+  
+  *Transform your data workflows with natural language commands through Claude Desktop*
+  
+  [![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://python.org)
+  [![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green.svg)](https://fastapi.tiangolo.com)
+  [![License](https://img.shields.io/badge/License-Hybrid-orange.svg)](#license)
+  [![MCP](https://img.shields.io/badge/MCP-1.10.1-red.svg)](https://modelcontextprotocol.io)
+  [![Tests](https://img.shields.io/badge/Tests-35%2F35%20Pass-brightgreen.svg)](#testing)
+  
 </div>
 
-# 🔬 **Deepline MCP Server**
+---
 
-> **End-to-End Data Science & MLOps Platform with AI Workflow Orchestration**  
-> *Seamlessly integrate data analysis, quality monitoring, model performance tracking, and natural language workflow automation with Claude Desktop*
+## 📋 **Table of Contents**
 
-[![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/License-Hybrid-green.svg)](#license)
-[![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://microsoft.com/windows)
-[![MCP](https://img.shields.io/badge/MCP-1.10.1-orange.svg)](https://modelcontextprotocol.io)
+- [✨ What is Deepline?](#-what-is-deepline)
+- [🎯 Key Features](#-key-features)  
+- [⚡ Quick Start](#-quick-start)
+- [📋 Prerequisites](#-prerequisites)
+- [🛠️ Installation](#️-installation)
+- [🏗️ System Architecture](#️-system-architecture)
+- [🔧 Infrastructure Components](#-infrastructure-components)
+- [📖 Tool Reference](#-tool-reference)
+- [🔄 Workflow Examples](#-workflow-examples)
+- [📁 Project Structure](#-project-structure)
+- [🧪 Testing](#-testing)
+- [🚨 Troubleshooting](#-troubleshooting)
+- [💡 Tips & Best Practices](#-tips--best-practices)
+- [📚 Documentation](#-documentation)
+- [📄 License](#-license)
+- [📞 Contact](#-contact)
 
-## 🚀 **Quick Start (Windows)**
+---
 
-### **Prerequisites**
-- Windows 10/11
-- Python 3.12 or higher
-- Claude Desktop app
+## ✨ **What is Deepline?**
 
-### **1. One-Click Setup**
+Deepline is a comprehensive **AI-powered data science platform** that integrates seamlessly with Claude Desktop through the Model Context Protocol (MCP). It provides **14 powerful data analysis tools** and an optional **Master Orchestrator** for natural language workflow automation.
+
+### **🎯 Core Capabilities**
+
+- **📊 Data Analysis**: 14 production-ready tools for EDA, quality assessment, and ML monitoring
+- **🤖 AI Workflow Orchestration**: Natural language to structured workflow translation
+- **📈 Model Performance Monitoring**: Real-time drift detection and performance tracking
+- **🛡️ Enterprise Security**: Input sanitization, validation, and secure processing
+- **🔄 Self-Contained Operation**: Works without external infrastructure dependencies
+
+### **🌟 Why Choose Deepline?**
+
+- ✅ **Zero Learning Curve**: Natural language interface through Claude Desktop
+- ✅ **Production Ready**: Enterprise-grade reliability with 100% test coverage (35/35 tests)
+- ✅ **Self-Contained**: Works without external services (graceful fallbacks to in-memory)
+- ✅ **Proven Components**: All tools tested and validated for real-world usage
+- ✅ **Extensible**: Plugin architecture for custom tools and integrations
+
+---
+
+## 🎯 **Key Features**
+
+### **📊 Core MCP Tools (14 Total)**
+
+| Category | Tools | Purpose |
+|----------|-------|---------|
+| **Data Management** | `load_data`, `basic_info`, `list_datasets` | Dataset loading and overview |
+| **Data Quality** | `missing_data_analysis`, `infer_schema`, `data_quality_report` | Quality assessment and validation |
+| **Visualization** | `create_visualization` | Interactive charts and plots |
+| **Statistics** | `statistical_summary`, `detect_outliers` | Descriptive analytics and anomaly detection |
+| **ML Monitoring** | `drift_analysis`, `model_performance_report` | Model performance and data drift |
+| **Feature Engineering** | `feature_transformation` | Box-Cox, log transforms, binning |
+| **Debug Tools** | `debug_drift_summary`, `debug_perf_summary` | Development and testing utilities |
+
+### **🤖 Master Orchestrator**
+
+- **Natural Language Processing**: Convert plain English to structured workflows
+- **Rule-Based Translation**: Instant recognition of common data science patterns
+- **Security Layer**: Input sanitization with XSS prevention and prompt injection defense
+- **Graceful Degradation**: Self-contained operation with intelligent infrastructure fallbacks
+- **SLA Monitoring**: Real-time task and workflow monitoring with configurable thresholds
+
+### **📈 Infrastructure Components**
+
+- **MongoDB**: Workflow persistence with graceful in-memory fallback
+- **Redis**: Caching layer with graceful in-memory fallback  
+- **Apache Kafka**: Event streaming for enterprise deployments
+- **React Dashboard**: Real-time monitoring interface
+
+---
+
+## ⚡ **Quick Start**
+
+### **🚀 5-Minute Setup**
+
 ```powershell
-# Clone and setup
+# 1. Clone repository
+git clone https://github.com/your-org/deepline.git
+cd deepline
+
+# 2. Install dependencies
+cd mcp-server
+pip install -r requirements-python313.txt
+
+# 3. Verify installation
+python verify_setup.py
+
+# 4. Launch MCP server
+python launch_server.py
+```
+
+### **🔗 Connect to Claude Desktop**
+
+1. **Automatic Configuration**: The server auto-configures Claude Desktop
+2. **Test Connection**: Open Claude Desktop and try:
+   ```
+   "Load the iris.csv dataset and show me basic info"
+   ```
+3. **Verify Response**: You should see data analysis results
+
+### **🚀 Launch Master Orchestrator**
+
+```powershell
+# Master Orchestrator API (Natural Language Workflows)
+python -m uvicorn master_orchestrator_api:app --host 127.0.0.1 --port 8000
+
+# Test API endpoints
+curl http://127.0.0.1:8000/health
+
+# Full Infrastructure (Enterprise)
+docker-compose up -d
+```
+
+---
+
+## 📋 **Prerequisites**
+
+### **System Requirements**
+
+| Component | Requirement | Recommended |
+|-----------|-------------|-------------|
+| **OS** | Windows 10/11 | Windows 11 22H2+ |
+| **Python** | 3.12+ | Python 3.13 |
+| **Memory** | 4GB RAM | 8GB+ RAM |
+| **Storage** | 2GB free space | 5GB+ free space |
+| **Network** | Internet connection | Stable broadband |
+
+### **Required Dependencies (Auto-installed)**
+
+```python
+# Core MCP Server
+pandas, numpy          # Data manipulation
+evidently              # ML monitoring and data quality
+plotly, matplotlib     # Visualization
+scikit-learn           # Machine learning utilities
+missingno              # Missing data visualization
+
+# Master Orchestrator
+fastapi, uvicorn       # API framework
+pydantic               # Data validation
+bleach, validators     # Security utilities
+
+# Infrastructure (Graceful Fallbacks Available)
+motor                  # MongoDB async driver  
+aioredis               # Redis async client
+confluent-kafka        # Kafka messaging
+```
+
+### **Claude Desktop Setup**
+
+1. **Download**: [Claude Desktop](https://claude.ai/download)
+2. **Install**: Follow platform-specific instructions
+3. **Configure**: Deepline auto-configures MCP connection
+4. **Verify**: Test with sample data analysis commands
+
+---
+
+## 🛠️ **Installation**
+
+### **Method 1: Standard Installation (Recommended)**
+
+```powershell
+# Create workspace
+mkdir deepline-workspace
+cd deepline-workspace
+
+# Clone repository
 git clone https://github.com/your-org/deepline.git
 cd deepline/mcp-server
 
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements-python313.txt
 
 # Verify installation
 python verify_setup.py
 ```
 
-### **2. Launch Server**
+**Expected Output:**
+```
+✅ Python 3.13 detected
+✅ All dependencies installed successfully
+✅ MCP server ready
+✅ Claude Desktop configuration updated
+```
+
+### **Method 2: Virtual Environment**
+
 ```powershell
-python launch_server.py
+# Create virtual environment
+python -m venv deepline-env
+deepline-env\Scripts\activate
+
+# Install dependencies
+pip install -r requirements-python313.txt
+
+# Test installation
+python -c "import pandas, evidently, plotly; print('✅ Core dependencies working')"
 ```
 
-### **3. Connect to Claude Desktop**
-Your Claude Desktop will automatically detect the server. Start with:
-```
-"Load the iris.csv dataset and show me basic info"
-```
+### **Method 3: Development Setup**
 
-### **4. Launch Master Orchestrator (Advanced)**
-For natural language workflow automation:
 ```powershell
-# Start Master Orchestrator API
-python -m uvicorn master_orchestrator_api:app --host 127.0.0.1 --port 8000
+# Clone for development
+git clone https://github.com/your-org/deepline.git
+cd deepline/mcp-server
 
-# Test the API
-curl http://127.0.0.1:8000/health
+# Install with dev tools
+pip install -r requirements-python313.txt
+pip install pytest black ruff mypy
+
+# Run tests to verify
+python test_master_orchestrator.py
 ```
-
-### **5. Launch Infrastructure (Enterprise)**
-For advanced workflows with multi-agent orchestration:
-```powershell
-# Start Kafka, MongoDB, and Dashboard
-docker-compose up -d
-
-# Start Dashboard Backend (in new terminal)
-cd dashboard/backend
-python main.py
-
-# Start Dashboard Frontend (in new terminal)
-cd dashboard/dashboard-frontend
-npm install
-npm start
-```
-
-Access the dashboard at: `http://localhost:3000`
-
----
-
-## 📊 **What This Does**
-
-Deepline transforms your data science workflow by providing **17 powerful tools** and a **Master Orchestrator** for workflow automation, all accessible through natural language in Claude Desktop:
-
-### **🔍 Data Exploration**
-- **Load datasets** from CSV, Excel, JSON
-- **Inspect data** with automatic profiling
-- **Visualize patterns** with 5 plot types
-- **Detect outliers** using 3 methods (IQR, Isolation Forest, LOF)
-
-### **🛡️ Data Quality**
-- **Missing data analysis** with 6-step pipeline
-- **Schema inference** with pattern detection
-- **Data quality reports** with Evidently
-- **Automated quality scoring**
-
-### **📈 Model Performance**
-- **Drift detection** comparing datasets
-- **Regression metrics** (RMSE, MAE, R²)
-- **Classification metrics** (accuracy, precision, recall, F1)
-- **Performance monitoring** with interactive reports
-
-### **🔧 Feature Engineering**
-- **Feature transformation** (Box-Cox, log, binning)
-- **Cardinality reduction** for categorical variables
-- **Multicollinearity detection** (VIF analysis)
-- **Target-guided discretization**
-
-### **🤖 Workflow Automation**
-- **Natural Language Processing** converts requests to structured workflows
-- **Rule-Based Translation** for instant common pattern recognition
-- **Enterprise Security** with input sanitization and validation
-- **Self-Contained Operation** with intelligent infrastructure fallbacks
 
 ---
 
 ## 🏗️ **System Architecture**
 
+### **High-Level Architecture**
+
+#### **MCP Server + Claude Desktop**
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Claude Desktop │────│   MCP Protocol  │────│  Deepline Server │
-│   (Frontend)     │    │   (Transport)   │    │   (Analytics)    │
+│   (Frontend)     │    │   (Transport)   │    │   (14 Tools)     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                        │
-                                               ┌─────────────────┐
-                                               │  Tool Ecosystem  │
-                                               │  • EDA Tools     │
-                                               │  • Quality Tools │
-                                               │  • ML Tools      │
-                                               │  • Viz Tools     │
-                                               └─────────────────┘
 ```
+
+#### **Master Orchestrator System**
+```
++-----------+      +--------------+      +--------------------+
+|  Clients  | ---> |  API Gateway | ---> | Master Orchestrator |
++-----------+      +--------------+      +--------------------+
+                                               |      |      |
+                                               v      v      v
+                                         +----------+ +------------+
+                                         |  DSL     | |  LLM       |
+                                         |  Parser  | | Translator |
+                                         | & Validator|(Guardrails)|
+                                         +----------+ +------------+
+                                               \      |      /
+                                                \     v     /
+                                                 +-----------+
+                                                 |  Fallback |
+                                                 |  Router   |
+                                                 +-----------+
+                                                      |
+                                                      v
+                                                +-----------+
+                                                | Workflow  |
+                                                | Manager   |
+                                                +-----------+
+                                                      |
+         +----------------+          +----------------+         +-----------+
+         |    MongoDB     |<-------->|    Kafka       |<------->|   Cache   |
+         | (runs, tasks)  |          | (requests,evts)|         | (LLM memo)|
+         +----------------+          +----------------+         +-----------+
+                                                      |
+                                                      v
+                                                  +--------+
+                                                  | Agents |
+                                                  |(EDA,   |
+                                                  | Feature,|
+                                                  | Model) |
+                                                  +--------+
+```
+
+### **Core Components**
+
+| Component | Technology | Status | Dependencies |
+|-----------|------------|---------|--------------|
+| **MCP Server** | Python, asyncio | ✅ Stable | Python 3.12+ |
+| **14 Data Tools** | pandas, evidently, sklearn | ✅ Production | Core packages only |
+| **Master Orchestrator** | FastAPI, pydantic | ✅ Production | API framework |
+| **Security Layer** | bleach, validators | ✅ Production | Security libraries |
+| **Infrastructure** | MongoDB, Redis, Kafka | 🔧 Graceful Fallbacks | External services |
+
+### **Data Flow**
+
+1. **User Input**: Natural language command in Claude Desktop
+2. **MCP Transport**: Secure communication to Deepline server
+3. **Tool Selection**: Automatic routing to appropriate MCP tool
+4. **Data Processing**: Execute analysis with built-in security validation
+5. **Result Generation**: Format and return structured results to Claude
+6. **Workflow Orchestration**: Complex workflows via Master Orchestrator API
+
+---
 
 ## 🔧 **Infrastructure Components**
 
-### **🚀 Messaging Backbone: Kafka (Local)**
-- **Apache Kafka**: High-throughput event streaming for inter-component communication
-- **Zookeeper**: Coordination service for Kafka cluster management
-- **Topics**: `workflow.commands`, `task.requests`, `task.events`
-- **Docker Compose**: Zero-cost local deployment
+### **🗄️ MongoDB**
 
-### **🗄️ Persistent Storage: MongoDB (Local)**
-- **MongoDB 6.0**: Document database for workflow and task metadata
-- **Motor Driver**: Async Python driver for high-performance operations
-- **Collections**: `runs`, `tasks`, `workflows`, `agents`
-- **Automatic Indexing**: Optimized queries on `run_id` and `task_id`
+- **Purpose**: Workflow metadata and task history
+- **Fallback**: Automatic in-memory storage when unavailable
+- **Configuration**: `mongodb://localhost:27017`
+- **Collections**: `workflows`, `tasks`, `runs`
 
-### **☸️ Container Orchestration: Kubernetes (Local)**
-- **Kind Cluster**: Local Kubernetes development environment
-- **Resource Quotas**: CPU and memory limits for cost control
-- **Agent Deployment**: Containerized agent instances
-- **Parallel Execution**: Multi-agent workflow processing
+### **⚡ Redis**
 
-### **📊 Observability Dashboard**
-- **FastAPI Backend**: REST API with WebSocket support for real-time events
-- **React Frontend**: Interactive dashboard with live agent monitoring
-- **Real-time Updates**: Live event streaming and agent status tracking
-- **Workflow Management**: Visual workflow templates and execution control
+- **Purpose**: LLM response caching and rate limiting
+- **Fallback**: Automatic in-memory cache when unavailable
+- **Configuration**: `redis://localhost:6379`
+- **Performance**: Sub-millisecond response times
 
-### **⚙️ Orchestrator & Workload Management**
-- **Concurrency Control**: Global workflow limits (configurable, default 1 concurrent workflow)
-- **Intelligent Retry Logic**: Exponential backoff with configurable max retries (3) and delays (30-300s)
-- **SLA Monitoring**: Automated detection of stale tasks (10min) and workflows (1hr) with real-time alerts
-- **Workload Estimation**: Pre-configured capacity planning (30 tasks/hour, 4min avg duration)
-- **Quality Gates**: Automatic workflow throttling prevents system overload
-- **Real-time Alerting**: Live SLA violation notifications via WebSocket dashboard
+### **📡 Apache Kafka**
 
-**Benefits:**
-- **System Stability**: Prevents resource exhaustion through controlled concurrency
-- **Reliability**: Automatic retry with smart backoff reduces transient failures  
-- **Observability**: Proactive SLA monitoring catches performance issues early
-- **Predictability**: Workload estimates enable better capacity planning
+- **Purpose**: Event streaming for enterprise deployments
+- **Topics**: `workflow.commands`, `task.events`, `system.alerts`
+- **Configuration**: `localhost:9092`
+- **Use Case**: Multi-service communication
 
-### **🤖 Master Orchestrator: Natural Language to Workflow Translation**
-> **Production-Ready System** | **100% Test Coverage** | **Self-Contained Operation**
+### **📊 Dashboard**
 
-Transform natural language requests into structured workflows with enterprise-grade reliability:
+- **Backend**: FastAPI server with WebSocket support
+- **Frontend**: React with real-time charts
+- **Access**: `http://localhost:3000`
+- **Features**: Live workflow monitoring, event streaming
 
-#### **🔄 Intelligent Translation Pipeline**
-- **Rule-Based Translation**: Instant pattern matching for common tasks ("load data", "train model")
-- **LLM Integration**: Advanced Claude-3-Sonnet translation for complex workflows  
-- **Human-in-the-Loop**: Automatic fallback when automation cannot resolve ambiguity
-- **Workflow Validation**: Built-in YAML structure validation and security checks
+---
 
-#### **🛡️ Enterprise Security & Reliability**
-- **Input Sanitization**: XSS prevention, prompt injection defense, context minimization
-- **Graceful Degradation**: Self-contained operation without external infrastructure dependencies
-- **Intelligent Fallbacks**: Automatic MongoDB→in-memory, Redis→in-memory cache switching
-- **Error Recovery**: Exponential backoff retry logic with configurable parameters
+## 📖 **Tool Reference**
 
-#### **📊 Advanced Monitoring & SLA Management**
-- **Real-Time SLA Monitoring**: 10-minute task, 1-hour workflow violation detection
-- **Concurrency Control**: Configurable workflow limits (default: 1 concurrent workflow)
-- **Rate Limiting**: Token bucket algorithm with sliding window strategies
-- **Performance Metrics**: Complete system statistics and health monitoring
+### **📥 Data Loading & Management**
 
-#### **🚀 Production Features**
-- **Zero-Infrastructure Startup**: Works immediately without MongoDB, Redis, or Kafka
-- **API-First Design**: RESTful endpoints with comprehensive health checks
-- **100% Test Coverage**: Comprehensive connectivity tests ensuring reliability
-- **Fast Response**: Sub-second translation for rule-based patterns
+| Tool | Purpose | Usage Example |
+|------|---------|---------------|
+| `load_data` | Load CSV/Excel/JSON files | `"Load sales_data.csv as sales"` |
+| `basic_info` | Dataset overview and summary | `"Show basic info for sales dataset"` |
+| `list_datasets` | Show all loaded datasets | `"What datasets are currently loaded?"` |
 
-#### **API Endpoints**
+### **🔍 Data Quality & Assessment**
+
+| Tool | Purpose | Usage Example |
+|------|---------|---------------|
+| `missing_data_analysis` | Analyze missing data patterns | `"Analyze missing data in customer dataset"` |
+| `infer_schema` | Detect data types and patterns | `"Infer schema for transaction dataset"` |
+| `data_quality_report` | Comprehensive quality assessment | `"Generate quality report for sales dataset"` |
+
+### **📊 Statistical Analysis & Visualization**
+
+| Tool | Purpose | Usage Example |
+|------|---------|---------------|
+| `statistical_summary` | Descriptive statistics | `"Get statistical summary of revenue dataset"` |
+| `detect_outliers` | Find anomalies using IQR/ML methods | `"Detect outliers in price data using IQR"` |
+| `create_visualization` | Generate interactive charts | `"Create histogram of customer ages"` |
+
+### **🤖 ML Model Monitoring**
+
+| Tool | Purpose | Usage Example |
+|------|---------|---------------|
+| `drift_analysis` | Compare datasets for data drift | `"Compare training vs production data for drift"` |
+| `model_performance_report` | Evaluate model metrics | `"Evaluate model performance with predictions"` |
+
+### **🔧 Feature Engineering**
+
+| Tool | Purpose | Usage Example |
+|------|---------|---------------|
+| `feature_transformation` | Apply Box-Cox, log, binning transforms | `"Apply Box-Cox transformation to sales data"` |
+
+### **🐛 Debug & Development**
+
+| Tool | Purpose | Usage Example |
+|------|---------|---------------|
+| `debug_drift_summary` | Detailed drift analysis | Development and testing |
+| `debug_perf_summary` | Performance debugging | Development and testing |
+
+---
+
+## 🔄 **Workflow Examples**
+
+### **Workflow 1: Quick Data Exploration**
+
+```markdown
+Goal: Understand a new dataset structure and quality
+
+1. "Load customer_data.csv as customers"
+2. "Show me basic info about the customers dataset"
+3. "Analyze missing data patterns in customers"
+4. "Create a statistical summary of customers"
+5. "Detect outliers in customers using IQR method"
+6. "Generate a data quality report for customers"
+
+Expected Result: Complete data understanding in ~3 minutes
+```
+
+### **Workflow 2: Model Performance Assessment**
+
+```markdown
+Goal: Evaluate ML model performance and detect drift
+
+1. "Load baseline_data.csv as baseline"
+2. "Load current_data.csv as current"
+3. "Analyze drift between baseline and current datasets"
+4. "Load model_predictions.csv as predictions"
+5. "Generate model performance report for predictions"
+
+Expected Result: Complete performance assessment in ~2 minutes
+```
+
+### **Workflow 3: Feature Engineering Pipeline**
+
+```markdown
+Goal: Prepare data for machine learning
+
+1. "Load raw_sales_data.csv as raw_sales"
+2. "Infer schema for raw_sales dataset"
+3. "Apply feature transformation to raw_sales with boxcox and log"
+4. "Detect outliers in transformed data"
+5. "Generate final data quality report"
+
+Expected Result: ML-ready dataset in ~4 minutes
+```
+
+### **Workflow 4: Automated Orchestration (API)**
+
 ```bash
-# Create workflow from natural language
-POST /workflows
-{
-  "natural_language": "Load sales data and generate monthly report",
-  "client_id": "analytics_team",
-  "metadata": {"priority": "high"}
-}
+# Natural language to structured workflow
+curl -X POST http://localhost:8000/workflows \
+  -H "Content-Type: application/json" \
+  -d '{
+    "natural_language": "Load sales data, detect anomalies, and create summary report",
+    "client_id": "analytics_team"
+  }'
 
-# Check workflow status
-GET /workflows/{workflow_id}
-
-# System health monitoring
-GET /health
-GET /stats
-```
-
-**Perfect for**: Enterprise data teams requiring reliable, scalable workflow automation with natural language interfaces.
-
----
-
-## 🛠️ **Installation Guide**
-
-### **Method 1: Standard Installation (Recommended)**
-```powershell
-# 1. Create project directory
-mkdir deepline-workspace
-cd deepline-workspace
-
-# 2. Clone repository
-git clone https://github.com/your-org/deepline.git
-cd deepline/mcp-server
-
-# 3. Install Python dependencies
-pip install -r requirements-python313.txt
-
-# 4. Test installation
-python -c "import pandas, numpy, evidently, missingno; print('✅ All dependencies installed')"
-```
-
-### **Method 2: Virtual Environment (Isolated)**
-```powershell
-# 1. Create virtual environment
-python -m venv deepline-env
-deepline-env\Scripts\activate
-
-# 2. Install in virtual environment
-pip install -r requirements-python313.txt
-
-# 3. Verify installation
-python verify_setup.py
-```
-
-### **Method 3: Development Setup**
-```powershell
-# 1. Install with development tools
-pip install -r requirements-python313.txt
-pip install pytest black ruff mypy
-
-# 2. Run tests
-python -m pytest test_*.py -v
-
-# 3. Check code quality
-black --check .
-ruff check .
+# Returns: Structured workflow with automatic execution
 ```
 
 ---
 
-## 📋 **Claude Desktop Integration**
-
-### **Automatic Setup**
-The server automatically configures Claude Desktop. Just verify the connection:
-
-```powershell
-# Check Claude Desktop configuration
-python verify_setup.py
-```
-
-### **Manual Setup (if needed)**
-1. **Locate Claude Desktop config**: `%APPDATA%\Claude\claude_desktop_config.json`
-2. **Configuration is automatically added** when you run the server
-3. **Restart Claude Desktop** to load the new server
-
-### **Verification**
-Open Claude Desktop and try:
-```
-"Load the iris.csv dataset and show basic info"
-```
-
-You should see the server respond with data analysis results.
-
----
-
-## 📊 **Tool Reference**
-
-### **Data Loading & Inspection**
-| Tool | Purpose | Example Usage |
-|------|---------|---------------|
-| `load_data` | Load CSV/Excel/JSON files | `"Load sales_data.csv"`  |
-| `basic_info` | Show dataset overview | `"Show basic info for sales_data"` |
-| `list_datasets` | List loaded datasets | `"What datasets are loaded?"` |
-
-### **Data Quality Analysis**
-| Tool | Purpose | Example Usage |
-|------|---------|---------------|
-| `missing_data_analysis` | Analyze missing patterns | `"Analyze missing data in sales_data"` |
-| `infer_schema` | Detect data types & patterns | `"Infer schema for sales_data"` |
-| `data_quality_report` | Generate quality report | `"Create quality report for sales_data"` |
-
-### **Statistical Analysis**
-| Tool | Purpose | Example Usage |
-|------|---------|---------------|
-| `statistical_summary` | Descriptive statistics | `"Get statistical summary of sales_data"` |
-| `detect_outliers` | Find outliers using IQR/ML | `"Detect outliers in sales_data using IQR"` |
-| `create_visualization` | Generate plots | `"Create histogram of sales_amount"` |
-
-### **Model Performance**
-| Tool | Purpose | Example Usage |
-|------|---------|---------------|
-| `drift_analysis` | Compare datasets for drift | `"Compare sales_jan vs sales_feb for drift"` |
-| `model_performance_report` | Evaluate model metrics | `"Evaluate model performance for predictions"` |
-
-### **Feature Engineering**
-| Tool | Purpose | Example Usage |
-|------|---------|---------------|
-| `feature_transformation` | Transform features | `"Apply Box-Cox transformation to sales_data"` |
-
----
-
-## 🔬 **Example Workflows**
-
-### **Workflow 1: Data Exploration**
-```
-1. "Load the customer_data.csv dataset"
-2. "Show me basic info about the dataset"
-3. "Analyze missing data patterns"
-4. "Create a correlation heatmap"
-5. "Detect outliers using isolation forest"
-```
-
-### **Workflow 2: Data Quality Assessment**
-```
-1. "Load the transaction_data.csv dataset"
-2. "Generate a data quality report"
-3. "Infer the schema for all columns"
-4. "Analyze missing data with recommendations"
-5. "Create missing data visualization"
-```
-
-### **Workflow 3: Model Performance Monitoring**
-```
-1. "Load baseline_data.csv and current_data.csv"
-2. "Analyze drift between baseline_data and current_data"
-3. "Generate drift analysis report"
-4. "Evaluate model performance with my predictions"
-```
-
----
-
-## 🎯 **Key Features**
-
-### **🔍 Smart Data Analysis**
-- **Automatic type detection** with 9 pattern types (email, phone, UUID, etc.)
-- **Missing data clustering** with correlation analysis
-- **Outlier detection** using 3 methods (IQR, Isolation Forest, LOF)
-- **Distribution analysis** with skewness and kurtosis
-
-### **🛡️ Data Quality Gates**
-- **Quality scoring** (0-100%) with impact assessment
-- **Automated recommendations** for data cleanup
-- **Little's test** for missing data mechanism detection
-- **Pattern validation** with regex matching
-
-### **📈 Performance Monitoring**
-- **Drift detection** with statistical tests
-- **Model performance** evaluation (regression & classification)
-- **Interactive HTML reports** with Evidently
-- **Threshold-based alerting**
-
-### **🔧 Advanced Engineering**
-- **Feature transformation** with Box-Cox and log transforms
-- **Cardinality reduction** for high-cardinality categories
-- **VIF analysis** for multicollinearity detection
-- **Target-guided discretization**
-
-### **⚙️ Configuration Management**
-- **Centralized config.yaml** for all system parameters
-- **Orchestrator settings**: Concurrency limits, retry policies, SLA thresholds
-- **EDA parameters**: Quality thresholds, visualization limits, performance settings
-- **Hot-reloadable**: Configuration changes without server restart
-
----
-
-## 🗂️ **Project Structure**
+## 📁 **Project Structure**
 
 ```
 deepline/
-├── mcp-server/                      # Core MCP Server
-│   ├── server.py                    # Main MCP server (17 tools)
-│   ├── launch_server.py             # Server launcher
-│   ├── verify_setup.py              # Setup verification
-│   ├── config.py                    # Configuration management
-│   ├── config.yaml                  # Tunable parameters (EDA + Orchestrator)
-│   ├── utils.py                     # Utility functions
-│   ├── requirements-python313.txt   # Python dependencies
-│   ├── iris.csv                     # Sample dataset
-│   └── reports/                     # Generated reports
-├── dashboard/                       # Observability Dashboard
-│   ├── backend/
-│   │   └── main.py                  # FastAPI server with WebSocket
-│   ├── dashboard-frontend/          # React dashboard
-│   │   ├── src/
-│   │   │   ├── App.js              # Main dashboard component
-│   │   │   └── App.css             # Dashboard styling
-│   │   └── package.json            # Frontend dependencies
-│   └── README.md                    # Dashboard documentation
-├── docker-compose.yml               # Kafka, MongoDB, infrastructure
-├── resource-quota.yaml              # Kubernetes resource limits
-├── docs/                            # Documentation
-├── tests/                           # Test files
-├── LICENSE-APACHE                   # SDK/Client license
-├── LICENSE-BUSL                     # Core license
-└── README.md                        # This file
+├── 📁 mcp-server/                    # Core MCP server implementation
+│   ├── 📄 server.py                 # Main MCP server (14 tools)
+│   ├── 📄 launch_server.py          # Server launcher
+│   ├── 📄 config.py                 # Configuration management
+│   ├── 📄 config.yaml               # System configuration
+│   ├── 📄 requirements-python313.txt # Python dependencies
+│   ├── 📄 verify_setup.py           # Installation verification
+│   ├── 📄 utils.py                  # Utility functions
+│   ├── 📄 iris.csv                  # Sample dataset
+│   │
+│   ├── 📁 orchestrator/             # Master Orchestrator
+│   │   ├── 📄 translator.py         # Natural language processing
+│   │   ├── 📄 workflow_manager.py   # Workflow execution
+│   │   ├── 📄 security.py           # Input validation & sanitization
+│   │   ├── 📄 cache_client.py       # Caching with fallbacks
+│   │   ├── 📄 guards.py             # Rate limiting & concurrency
+│   │   └── 📄 sla_monitor.py        # SLA monitoring
+│   │
+│   ├── 📄 master_orchestrator_api.py # FastAPI orchestrator service
+│   ├── 📄 test_master_orchestrator.py # Comprehensive tests (35 tests)
+│   └── 📄 reports/                  # Generated analysis reports
+│
+├── 📁 dashboard/                     # Web dashboard
+│   ├── 📁 backend/                  # FastAPI backend
+│   │   └── 📄 main.py              # Dashboard API server
+│   └── 📁 dashboard-frontend/       # React frontend
+│       ├── 📄 package.json         # Node.js dependencies
+│       └── 📁 src/                 # React components
+│
+├── 📁 docs/                         # Documentation
+│   ├── 📄 INSTALLATION.md          # Setup guide
+│   ├── 📄 USER_GUIDE.md            # User manual
+│   ├── 📄 CONFIGURATION.md         # Config reference
+│   ├── 📄 EXAMPLES.md              # Workflow examples
+│   ├── 📄 CONTRIBUTING.md          # Development guide
+│   └── 📄 CONNECTIVITY_TEST_REPORT.md # Test results (35/35 passed)
+│
+├── 📄 docker-compose.yml           # Infrastructure orchestration
+├── 📄 LICENSE.md                   # Hybrid license information
+├── 📄 LICENSE-APACHE               # Apache 2.0 license text
+├── 📄 LICENSE-BUSL                 # Business Source License text
+└── 📄 README.md                    # This file
 ```
-
----
-
-## 🏗️ **Infrastructure Setup**
-
-### **🐳 Docker Infrastructure**
-```powershell
-# Start all infrastructure services
-docker-compose up -d
-
-# Verify services are running
-docker-compose ps
-
-# Check service logs
-docker-compose logs kafka
-docker-compose logs mongo
-```
-
-### **📊 Dashboard Setup**
-```powershell
-# Backend setup (Terminal 1)
-cd dashboard/backend
-pip install fastapi uvicorn motor confluent-kafka
-python main.py
-
-# Frontend setup (Terminal 2)
-cd dashboard/dashboard-frontend
-npm install
-npm start
-```
-
-### **☸️ Kubernetes Setup (Optional)**
-```powershell
-# Install kind (if not already installed)
-# Windows: choco install kind
-# Linux: curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64
-
-# Create local cluster
-kind create cluster --name deepline
-
-# Apply resource quota
-kubectl apply -f resource-quota.yaml
-
-# Verify cluster
-kubectl get nodes
-kubectl get quota
-```
-
-### **🔧 Kafka Topic Management**
-```powershell
-# Create topics manually (if needed)
-docker exec -it $(docker ps -qf "ancestor=confluentinc/cp-kafka") bash
-kafka-topics --create --topic workflow.commands --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
-kafka-topics --create --topic task.requests --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
-kafka-topics --create --topic task.events --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
-exit
-```
-
-### **🗄️ MongoDB Initialization**
-```powershell
-# Connect to MongoDB
-docker exec -it $(docker ps -qf "ancestor=mongo:6.0") mongo
-
-# Create indexes for performance
-use deepline
-db.runs.createIndex({ run_id: 1 })
-db.tasks.createIndex({ run_id: 1, task_id: 1 })
-exit
-```
-
-### **📈 Dashboard Features**
-- **Multi-Agent Workflow Management**: Start and monitor complex workflows
-- **Real-time Agent Status**: Live updates of agent states and activities
-- **Interactive Charts**: Visual representation of event activity
-- **Workflow Templates**: Pre-configured workflows for common tasks
-- **Live Event Streaming**: Real-time event monitoring via WebSocket
 
 ---
 
 ## 🧪 **Testing**
 
-### **Run All Tests**
-```powershell
-# Run comprehensive tests
-python test_evidently_tools.py      # Data quality & drift tests
-python test_infer_schema.py         # Schema inference tests
-python test_model_performance.py    # Model performance tests
+### **🔍 Test Results (Current)**
+
+**Latest Test Run (2025-07-17):**
+```
+🎉 PERFECT SUCCESS - Master Orchestrator working flawlessly!
+Success Rate: 100% (35 passed / 35 total tests)
+Test Duration: ~35 seconds
 ```
 
-### **Quick Health Check**
+### **📊 Test Categories**
+
+| Category | Tests | Status | Coverage |
+|----------|-------|--------|----------|
+| **Environment & Dependencies** | 9/9 | ✅ Pass | Python, libraries, imports |
+| **Configuration System** | 5/5 | ✅ Pass | YAML loading, validation |
+| **Core Components** | 8/8 | ✅ Pass | Security, cache, guards, translators |
+| **API System** | 4/4 | ✅ Pass | FastAPI routes, endpoints |
+| **Infrastructure** | 9/9 | ✅ Pass | Graceful fallbacks when services unavailable |
+
+### **🚀 Running Tests**
+
 ```powershell
-# Verify server is working
+# Run comprehensive connectivity test
+python test_master_orchestrator.py
+
+# Run individual component tests
+python test_evidently_tools.py
+python test_infer_schema.py
+python test_model_performance.py
+
+# Verify complete setup
 python verify_setup.py
-
-# Test with sample data
-python -c "
-import asyncio
-from server import load_data, basic_info
-asyncio.run(load_data('iris.csv', 'test'))
-result = asyncio.run(basic_info('test'))
-print(result)
-"
 ```
 
-### **Test Claude Desktop Integration**
-1. **Start server**: `python launch_server.py`
-2. **Open Claude Desktop**
-3. **Try**: `"Load iris.csv and show basic info"`
-4. **Expected**: Data analysis results displayed
+### **🔧 Test Configuration**
+
+All tests include:
+- ✅ **Graceful Degradation**: Tests pass without external infrastructure
+- ✅ **Error Handling**: Comprehensive exception testing
+- ✅ **Windows Compatibility**: UTF-8 encoding and emoji handling
+- ✅ **Real-world Scenarios**: Integration with actual data files
 
 ---
 
 ## 🚨 **Troubleshooting**
 
-### **Common Issues**
+### **🔧 Common Issues & Solutions**
 
-#### **❌ "ModuleNotFoundError: No module named 'evidently'"**
+#### **Issue 1: MCP Server Won't Start**
+
+**Symptoms:**
+```
+Error: Failed to start MCP server
+ImportError: No module named 'evidently'
+```
+
+**Solutions:**
 ```powershell
-# Solution: Install missing dependencies
+# Install missing dependencies
 pip install -r requirements-python313.txt
-```
 
-#### **❌ "KeyError: Dataset not found"**
-```powershell
-# Solution: Check dataset name and load first
-# List loaded datasets
-python -c "from server import list_datasets; print(asyncio.run(list_datasets()))"
-```
+# Verify Python version
+python --version  # Should be 3.12+
 
-#### **❌ "Claude Desktop not connecting"**
-```powershell
-# Solution: Verify setup and restart Claude
+# Check installation
 python verify_setup.py
-# Then restart Claude Desktop completely
 ```
 
-#### **❌ "Permission denied writing to reports/"**
-```powershell
-# Solution: Check directory permissions
-mkdir reports
-# Or run as administrator if needed
-```
+#### **Issue 2: Claude Desktop Not Connecting**
 
-### **Debug Mode**
+**Symptoms:**
+- Claude Desktop doesn't show Deepline tools
+- No response to data analysis commands
+
+**Solutions:**
 ```powershell
-# Enable debug logging
-$env:DEBUG = "true"
+# Verify server is running
 python launch_server.py
+
+# Check Claude Desktop config
+python -c "from config import setup_claude_desktop; setup_claude_desktop()"
+
+# Restart Claude Desktop completely
+taskkill /IM "Claude.exe" /F
+# Then launch Claude Desktop again
 ```
 
-### **Infrastructure Issues**
+#### **Issue 3: Master Orchestrator API Issues**
 
-#### **❌ "Docker services not starting"**
-```powershell
-# Check Docker is running
-docker --version
-
-# Reset Docker Compose
-docker-compose down
-docker-compose up -d
-
-# Check service health
-docker-compose ps
+**Symptoms:**
+```
+HTTP 500 Internal Server Error
+Configuration not available
 ```
 
-#### **❌ "Kafka connection failed"**
+**Solutions:**
 ```powershell
-# Verify Kafka is accessible
-docker exec -it $(docker ps -qf "ancestor=confluentinc/cp-kafka") bash
-kafka-topics --list --bootstrap-server localhost:9092
-exit
+# Check configuration
+python -c "from config import load_config; print('Config loaded successfully')"
+
+# Install missing API dependencies
+pip install fastapi uvicorn bleach validators aioredis
+
+# Test API
+python -m uvicorn master_orchestrator_api:app --reload
+curl http://127.0.0.1:8000/health
 ```
 
-#### **❌ "MongoDB connection refused"**
+### **📋 Diagnostic Commands**
+
 ```powershell
-# Check MongoDB status
-docker exec -it $(docker ps -qf "ancestor=mongo:6.0") mongo --eval "db.adminCommand('ping')"
-```
-
-#### **❌ "Dashboard not loading"**
-```powershell
-# Check backend is running
-curl http://localhost:8000/
-
-# Check frontend dependencies
-cd dashboard/dashboard-frontend
-npm install
-npm start
-```
-
-#### **❌ "WebSocket connection failed"**
-```powershell
-# Verify WebSocket endpoint
-curl -H "Connection: Upgrade" -H "Upgrade: websocket" http://localhost:8000/ws/events
-```
-
-### **Get Help**
-- **Check logs**: Look in `reports/` directory for error logs
-- **Run diagnostics**: `python verify_setup.py`
-- **Test tools individually**: Use test files in project root
-- **Infrastructure logs**: `docker-compose logs [service-name]`
-
----
-
-## 🔄 **Updates & Maintenance**
-
-### **Update Dependencies**
-```powershell
-# Update to latest versions
-pip install --upgrade -r requirements-python313.txt
-
-# Verify after update
+# Complete system check
 python verify_setup.py
-```
 
-### **Backup Configuration**
-```powershell
-# Backup your config (if customized)
-copy config.yaml config.yaml.backup
-```
+# Test core components
+python test_master_orchestrator.py
 
-### **Clean Installation**
-```powershell
-# Remove and reinstall
-pip uninstall -y -r requirements-python313.txt
-pip install -r requirements-python313.txt
+# Check dependencies
+pip check
+
+# Test individual tools
+python -c "
+import asyncio
+from server import load_data, basic_info
+asyncio.run(load_data('iris.csv', 'test'))
+result = asyncio.run(basic_info('test'))
+print('✅ MCP tools working:', len(result) > 100)
+"
 ```
 
 ---
 
 ## 💡 **Tips & Best Practices**
 
-### **Performance**
-- **Large datasets**: Use sampling features for >10,000 rows
-- **Memory usage**: Monitor with `basic_info` memory reporting
-- **Batch processing**: Load multiple datasets for comparative analysis
+### **🚀 Performance Optimization**
 
-### **Data Quality**
-- **Always run** `missing_data_analysis` before modeling
-- **Use** `infer_schema` to validate data types
-- **Check** `data_quality_report` for comprehensive assessment
+#### **Memory Management**
+```powershell
+# Monitor memory usage during analysis
+python -c "import psutil; print(f'Available RAM: {psutil.virtual_memory().available // (1024**3)}GB')"
 
-### **Visualization**
-- **Start with** correlation heatmaps for feature relationships
-- **Use** `detect_outliers` with visualization for data cleaning
-- **Generate** missing data patterns for understanding gaps
+# Use dataset sampling for large files
+"Load first 10000 rows of large_dataset.csv as sample"
 
-### **Model Monitoring**
-- **Compare** baseline vs current with `drift_analysis`
-- **Track** performance metrics over time
-- **Set** quality gates with threshold-based alerts
+# Clear loaded datasets when done
+"List all loaded datasets and remove old ones"
+```
+
+#### **Efficient Analysis Patterns**
+```markdown
+# ✅ Optimized workflow
+1. Load with sampling: "Load first 5000 rows of data.csv"
+2. Quick overview: "Show basic info" 
+3. Targeted analysis: "Focus on missing data patterns"
+4. Specific visualizations: "Create histogram of key columns"
+
+# ❌ Inefficient approach  
+1. Load entire 5GB dataset
+2. Run all possible analyses
+3. Generate every visualization type
+```
+
+### **🛡️ Security Best Practices**
+
+- ✅ **Input Sanitization**: All inputs automatically sanitized by security layer
+- ✅ **Local Processing**: Data never leaves your machine
+- ✅ **Secure Protocols**: MCP uses encrypted communication channels
+- ❌ **Avoid Sensitive Paths**: Don't load files from system directories
+
+### **📊 Analysis Best Practices**
+
+```markdown
+# Start with data understanding
+1. "Load dataset and show basic info"
+2. "Infer schema to understand data types"
+3. "Analyze missing data patterns"
+
+# Then move to specific analysis
+4. "Generate statistical summary"
+5. "Detect outliers using appropriate method"
+6. "Create targeted visualizations"
+
+# Finish with quality assessment
+7. "Generate comprehensive data quality report"
+```
 
 ---
 
-## 🤝 **Contributing**
+## 📚 **Documentation**
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+### **📖 Available Documentation**
+- [`docs/INSTALLATION.md`](docs/INSTALLATION.md) - Detailed setup instructions
+- [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) - Complete user manual  
+- [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) - Configuration reference
+- [`docs/EXAMPLES.md`](docs/EXAMPLES.md) - Comprehensive workflow examples
+- [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) - Development guidelines
+- [`docs/CONNECTIVITY_TEST_REPORT.md`](docs/CONNECTIVITY_TEST_REPORT.md) - Test results
 
-### **Development Setup**
-```powershell
-# 1. Fork the repository
-# 2. Clone your fork
-git clone https://github.com/your-username/deepline.git
-cd deepline/mcp-server
-
-# 3. Install development dependencies
-pip install -r requirements-python313.txt
-pip install pytest black ruff mypy
-
-# 4. Run tests
-python -m pytest test_*.py -v
-
-# 5. Format code
-black .
-ruff check --fix .
-```
+### **🚀 API Documentation**
+- **Master Orchestrator API**: `http://localhost:8000/docs` (when running)
+- **Interactive API Explorer**: Swagger UI with live testing
+- **Health Endpoints**: `/health`, `/stats` for monitoring
 
 ---
 
 ## 📄 **License**
 
-This project uses a **Hybrid License** approach:
+This project uses a **Hybrid "Adoption + Protection" License**:
 
-- **SDK/Client Components**: [Apache License 2.0](LICENSE-APACHE)
-- **Core Server**: [Business Source License 1.1](LICENSE-BUSL)
-  - Converts to Apache 2.0 after 3 years
-  - Allows unrestricted use for non-commercial purposes
+### **🔓 Apache 2.0 - SDK/Client Components**
+- Client SDKs and libraries
+- Integration examples and documentation  
+- Testing frameworks and development tools
+- **Commercial use**: ✅ Unrestricted
 
-See [LICENSE.md](LICENSE.md) for complete details.
+### **🛡️ BUSL 1.1 - Core Server**
+- Main MCP server (`server.py`)
+- Core analysis tools and algorithms
+- Data processing pipeline components
+- **Commercial use**: ⚠️ Contact for licensing
+- **Non-commercial use**: ✅ Permitted
 
----
+### **🔄 Automatic Conversion**
+**After 3 years (2027-01-01):** All components automatically convert to Apache 2.0
 
-## 🗺️ **Roadmap**
-
-### **Phase 1: ✅ EDA Foundation** 
-- Data loading, inspection, visualization
-- Missing data analysis and quality assessment
-- Basic statistical analysis and outlier detection
-
-### **Phase 2: ✅ Quality & Monitoring**
-- Data drift detection and performance monitoring
-- Automated quality scoring and recommendations
-- Interactive HTML reports with Evidently
-
-### **Phase 3: ✅ Infrastructure & Orchestration**
-- Kafka messaging backbone for event streaming
-- MongoDB persistent storage for workflow metadata
-- Kubernetes support for container orchestration
-- Real-time observability dashboard with multi-agent workflow management
-
-### **Phase 4: 🚧 Advanced Analytics** 
-- Feature engineering and transformation
-- Model training and evaluation
-- Automated ML pipeline integration
-
-### **Phase 5: 🔄 Production Ready**
-- Advanced multi-agent orchestration
-- API endpoints for external integration
-- Scalable cloud deployment options
-- Advanced monitoring and alerting
+See [`LICENSE.md`](LICENSE.md) for complete license terms.
 
 ---
 
-## 📞 **Support**
+## 📞 **Contact**
 
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/your-org/deepline/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/deepline/discussions)
+### **👨‍💻 Project Maintainer**
+- **LinkedIn**: [Taimoor Awan](https://www.linkedin.com/in/taimoorawan/)
+- **Email**: [taimoorintech@gmail.com](mailto:taimoorintech@gmail.com)
+
+### **🐛 Issues & Support**
+- **GitHub Issues**: Report bugs and request features
+- **GitHub Discussions**: Community support and questions
+- **Documentation**: Check `docs/` directory for detailed guides
+
+### **💼 Commercial Licensing**
+For commercial use of core server components:
+- **Contact**: [taimoorintech@gmail.com](mailto:taimoorintech@gmail.com)
+- **Response Time**: Within 48 hours
+- **Custom Agreements**: Available for enterprise deployments
 
 ---
 
-**Made with ❤️ for Data Scientists**  
+<div align="center">
+
+**Built with ❤️ for the data science community**
+
 *Transforming data analysis through natural language interfaces*
+
+[🌟 Star on GitHub](https://github.com/your-org/deepline) • [📝 Report Issues](https://github.com/your-org/deepline/issues) • [💬 Join Discussions](https://github.com/your-org/deepline/discussions)
+
+</div>
