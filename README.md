@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="deepline-logo.png" alt="Deepline Logo" width="200"/>
+</div>
+
 # 🔬 **Deepline MCP Server**
 
 > **End-to-End Data Science & MLOps Platform**  
