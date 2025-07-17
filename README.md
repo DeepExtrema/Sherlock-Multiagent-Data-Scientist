@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="deepline-logo.png.jpg" alt="Deepline Logo" width="200"/>
+  <img src="deepline-logo.png" alt="Deepline Logo" width="200"/>
 </div>
 
 # 🔬 **Deepline MCP Server**
