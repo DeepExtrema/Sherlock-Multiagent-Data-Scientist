@@ -40,11 +40,11 @@
 
 ## ✨ **What is Deepline?**
 
-Deepline is a comprehensive **AI-powered data science platform** that integrates seamlessly with Claude Desktop through the Model Context Protocol (MCP). It provides **14 powerful data analysis tools** and an optional **Master Orchestrator** for natural language workflow automation.
+Deepline is a comprehensive **AI-powered data science platform** that integrates seamlessly with Claude Desktop through the Model Context Protocol (MCP). It provides **12 production-ready data analysis tools** and a **Master Orchestrator** for natural language workflow automation.
 
 ### **🎯 Core Capabilities**
 
-- **📊 Data Analysis**: 14 production-ready tools for EDA, quality assessment, and ML monitoring
+- **📊 Data Analysis**: 12 production-ready tools for EDA, quality assessment, and ML monitoring
 - **🤖 AI Workflow Orchestration**: Natural language to structured workflow translation
 - **📈 Model Performance Monitoring**: Real-time drift detection and performance tracking
 - **🛡️ Enterprise Security**: Input sanitization, validation, and secure processing
@@ -62,17 +62,16 @@ Deepline is a comprehensive **AI-powered data science platform** that integrates
 
 ## 🎯 **Key Features**
 
-### **📊 Core MCP Tools (14 Total)**
+### **📊 Core MCP Tools (12 Production + 2 Debug)**
 
-| Category | Tools | Purpose |
-|----------|-------|---------|
-| **Data Management** | `load_data`, `basic_info`, `list_datasets` | Dataset loading and overview |
-| **Data Quality** | `missing_data_analysis`, `infer_schema`, `data_quality_report` | Quality assessment and validation |
-| **Visualization** | `create_visualization` | Interactive charts and plots |
-| **Statistics** | `statistical_summary`, `detect_outliers` | Descriptive analytics and anomaly detection |
-| **ML Monitoring** | `drift_analysis`, `model_performance_report` | Model performance and data drift |
-| **Feature Engineering** | `feature_transformation` | Box-Cox, log transforms, binning |
-| **Debug Tools** | `debug_drift_summary`, `debug_perf_summary` | Development and testing utilities |
+| Category | Tools | Status | Purpose |
+|----------|-------|--------|---------|
+| **EDA Agent** | `load_data`, `basic_info`, `list_datasets`, `missing_data_analysis` | ✅ Active | Dataset loading and overview |
+| **EDA Agent** | `statistical_summary`, `create_visualization`, `detect_outliers`, `infer_schema` | ✅ Active | Statistical analysis and visualization |
+| **Data Quality** | `data_quality_report` | 🔶 Partial | Comprehensive quality assessment |
+| **Feature Engineering** | `feature_transformation` | 🔶 Partial | Box-Cox, log transforms, binning |
+| **ML Monitoring** | `drift_analysis`, `model_performance_report` | 🔶 Partial | Model performance and data drift |
+| **Debug Tools** | `debug_drift_summary`, `debug_perf_summary` | 🛠️ Dev Only | Development and testing utilities |
 
 ### **🤖 Master Orchestrator**
 
@@ -292,7 +291,10 @@ python test_master_orchestrator.py
 | Component | Technology | Status | Dependencies |
 |-----------|------------|---------|--------------|
 | **MCP Server** | Python, asyncio | ✅ Stable | Python 3.12+ |
-| **14 Data Tools** | pandas, evidently, sklearn | ✅ Production | Core packages only |
+| **EDA Agent (8 tools)** | pandas, evidently, sklearn | ✅ Active | Core packages only |
+| **Quality Agent (1 tool)** | evidently, great-expectations | 🔶 Partial | Quality packages |
+| **Feature Agent (1 tool)** | scikit-learn, scipy | 🔶 Partial | ML packages |
+| **Monitoring Agent (2 tools)** | evidently, sklearn | 🔶 Partial | Monitoring packages |
 | **Master Orchestrator** | FastAPI, pydantic | ✅ Production | API framework |
 | **Security Layer** | bleach, validators | ✅ Production | Security libraries |
 | **Infrastructure** | MongoDB, Redis, Kafka | 🔧 Graceful Fallbacks | External services |
@@ -454,7 +456,7 @@ curl -X POST http://localhost:8000/workflows \
 ```
 deepline/
 ├── 📁 mcp-server/                    # Core MCP server implementation
-│   ├── 📄 server.py                 # Main MCP server (14 tools)
+│   ├── 📄 server.py                 # Main MCP server (12 production tools)
 │   ├── 📄 launch_server.py          # Server launcher
 │   ├── 📄 config.py                 # Configuration management
 │   ├── 📄 config.yaml               # System configuration
@@ -727,6 +729,146 @@ This project uses a **Hybrid "Adoption + Protection" License**:
 **After 3 years (2027-01-01):** All components automatically convert to Apache 2.0
 
 See [`LICENSE.md`](LICENSE.md) for complete license terms.
+
+---
+
+## 📦 **Complete Dependencies & Libraries**
+
+### **Core Framework Dependencies**
+
+| Library | Version | Purpose | Category |
+|---------|---------|---------|----------|
+| `mcp[cli]` | ≥1.10.1 | Model Context Protocol framework | Core |
+| `pydantic` | ≥2.11.7 | Data validation and settings | Core |
+| `python-dateutil` | ≥2.9.0 | Date/time parsing utilities | Core |
+| `typing-extensions` | ≥4.8.0 | Python 3.13 compatibility | Core |
+
+### **Data Processing & Analysis**
+
+| Library | Version | Purpose | Used By |
+|---------|---------|---------|---------|
+| `pandas` | ≥2.2.0 | Primary data manipulation | All agents |
+| `numpy` | ≥2.1.0 | Numerical computing | All agents |
+| `pyarrow` | ≥20.0.0 | Columnar data format | Data loading |
+| `scikit-learn` | ≥1.7.0 | Machine learning algorithms | Feature, Monitoring |
+| `scipy` | ≥1.15.0 | Scientific computing | EDA, Feature |
+| `pyod` | ≥2.0.5 | Outlier detection models | EDA Agent |
+
+### **Data Quality & Monitoring**
+
+| Library | Version | Purpose | Used By |
+|---------|---------|---------|---------|
+| `evidently` | ≥0.7.9 | ML model monitoring and data quality | Quality, Monitoring |
+| `pandas-profiling` | ≥3.2.0 | Automated data profiling | Quality Agent |
+| `missingno` | ≥0.5.2 | Missing data visualization | EDA Agent |
+
+### **Visualization**
+
+| Library | Version | Purpose | Used By |
+|---------|---------|---------|---------|
+| `matplotlib` | ≥3.10.0 | Basic plotting and visualization | EDA Agent |
+| `seaborn` | ≥0.13.0 | Statistical data visualization | EDA Agent |
+| `plotly` | ≥5.24.0 | Interactive plots and dashboards | EDA Agent |
+
+### **Master Orchestrator Dependencies**
+
+| Library | Version | Purpose | Component |
+|---------|---------|---------|-----------|
+| `guardrails-ai` | ≥0.5.0 | LLM output validation | LLM Translator |
+| `openai` | ≥1.0.0 | OpenAI API client | LLM Translator |
+| `fastapi` | ≥0.104.0 | Web framework | API Gateway |
+| `uvicorn[standard]` | ≥0.24.0 | ASGI server | API Gateway |
+| `httpx` | ≥0.25.0 | HTTP client | API Gateway |
+
+### **Infrastructure Dependencies**
+
+| Library | Version | Purpose | Component |
+|---------|---------|---------|-----------|
+| `confluent-kafka` | ≥2.3.0 | Kafka messaging client | Event Streaming |
+| `motor` | ≥3.3.0 | Async MongoDB driver | Workflow Manager |
+| `pymongo` | ≥4.6.0 | MongoDB driver | Workflow Manager |
+| `redis` | ≥5.0.0 | Redis client | Cache Client |
+| `aioredis` | ≥2.0.0 | Async Redis client | Cache Client |
+
+### **Configuration & Security**
+
+| Library | Version | Purpose | Component |
+|---------|---------|---------|-----------|
+| `pyyaml` | ≥6.0.1 | YAML parsing | Configuration |
+| `python-multipart` | ≥0.0.6 | Multipart form parsing | API Gateway |
+| `tenacity` | ≥8.2.0 | Retry logic | Workflow Manager |
+| `slowapi` | ≥0.1.9 | Rate limiting | Guards |
+| `bleach` | ≥6.1.0 | HTML sanitization | Security Utils |
+| `validators` | ≥0.22.0 | Input validation | Security Utils |
+
+---
+
+## 🚨 **Error Codes & Exception Reference**
+
+### **Core System Errors**
+
+| Error Code | Exception Type | Meaning | Resolution |
+|------------|---------------|---------|------------|
+| `FileNotFoundError` | Built-in | Dataset file not found | Check file path and permissions |
+| `KeyError: Dataset not found` | Built-in | Dataset name not in store | Load dataset first with `load_data` |
+| `ValueError: Unsupported format` | Built-in | File format not supported | Use CSV, Excel, or JSON files |
+| `ValueError: No numeric columns` | Built-in | No numeric data for analysis | Check data types with `infer_schema` |
+
+### **Master Orchestrator Errors**
+
+| Error Code | Exception Type | Meaning | Resolution |
+|------------|---------------|---------|------------|
+| `NeedsHumanError` | Custom | Human intervention required | Review context and provide manual workflow |
+| `HTTPException 429` | FastAPI | Rate limit exceeded | Wait and retry, check rate limits |
+| `HTTPException 400` | FastAPI | Invalid request format | Check request schema and parameters |
+| `ConfigurationError` | Custom | Configuration file invalid | Validate YAML syntax and required fields |
+
+### **Infrastructure Errors**
+
+| Error Code | Exception Type | Meaning | Resolution |
+|------------|---------------|---------|------------|
+| `MongoDB Connection` | Motor | Database unavailable | System falls back to in-memory storage |
+| `Redis Connection` | aioredis | Cache unavailable | System falls back to in-memory cache |
+| `Kafka Connection` | confluent-kafka | Message broker unavailable | Events stored locally until reconnect |
+| `NetworkTimeout` | Motor | Database timeout | Check MongoDB service status |
+
+### **Data Processing Errors**
+
+| Error Code | Exception Type | Meaning | Resolution |
+|------------|---------------|---------|------------|
+| `MemoryError` | Built-in | Dataset too large | Use sampling or increase system memory |
+| `OutlierError` | Custom | No outliers detected | Try different detection method or parameters |
+| `TransformationError` | Custom | Feature transformation failed | Check data types and transformation parameters |
+| `SchemaInferenceError` | Custom | Cannot determine data types | Manual schema specification required |
+
+### **Security Errors**
+
+| Error Code | Exception Type | Meaning | Resolution |
+|------------|---------------|---------|------------|
+| `PromptInjectionError` | Custom | Malicious input detected | Input sanitized, review user request |
+| `ValidationError` | Pydantic | Input validation failed | Check request format and field types |
+| `SanitizationError` | Custom | Input cleaning failed | Review and clean input manually |
+| `RateLimitExceeded` | Custom | Too many requests | Wait for rate limit reset |
+
+### **Workflow Errors**
+
+| Error Code | Exception Type | Meaning | Resolution |
+|------------|---------------|---------|------------|
+| `WorkflowValidationError` | Custom | Invalid workflow structure | Check YAML format and required fields |
+| `TaskTimeoutError` | Custom | Task exceeded SLA timeout | Review task complexity or increase timeout |
+| `DependencyError` | Custom | Task dependency failure | Fix upstream task or dependency chain |
+| `ConcurrencyError` | Custom | Too many concurrent workflows | Wait for running workflows to complete |
+
+### **Error Recovery Patterns**
+
+| Scenario | Recovery Strategy | Implementation |
+|----------|------------------|----------------|
+| **MongoDB Down** | Graceful fallback to in-memory | Automatic detection and switch |
+| **Redis Down** | In-memory cache fallback | Transparent cache switching |
+| **Kafka Down** | Local event storage | Queue events until reconnection |
+| **Task Failure** | Exponential backoff retry | 3 retries with 30-300s backoff |
+| **LLM Translation Fail** | Rule-based fallback | Automatic method switching |
+| **Human Intervention** | Context preservation | Save state and await manual input |
 
 ---
 
