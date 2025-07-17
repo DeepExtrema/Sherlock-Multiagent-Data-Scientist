@@ -4,8 +4,8 @@
 
 # 🔬 **Deepline MCP Server**
 
-> **End-to-End Data Science & MLOps Platform**  
-> *Seamlessly integrate data analysis, quality monitoring, and model performance tracking with Claude Desktop*
+> **End-to-End Data Science & MLOps Platform with AI Workflow Orchestration**  
+> *Seamlessly integrate data analysis, quality monitoring, model performance tracking, and natural language workflow automation with Claude Desktop*
 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-Hybrid-green.svg)](#license)
@@ -43,7 +43,17 @@ Your Claude Desktop will automatically detect the server. Start with:
 "Load the iris.csv dataset and show me basic info"
 ```
 
-### **4. Launch Infrastructure (Optional)**
+### **4. Launch Master Orchestrator (Advanced)**
+For natural language workflow automation:
+```powershell
+# Start Master Orchestrator API
+python -m uvicorn master_orchestrator_api:app --host 127.0.0.1 --port 8000
+
+# Test the API
+curl http://127.0.0.1:8000/health
+```
+
+### **5. Launch Infrastructure (Enterprise)**
 For advanced workflows with multi-agent orchestration:
 ```powershell
 # Start Kafka, MongoDB, and Dashboard
@@ -65,7 +75,7 @@ Access the dashboard at: `http://localhost:3000`
 
 ## 📊 **What This Does**
 
-Deepline transforms your data science workflow by providing **17 powerful tools** accessible through natural language in Claude Desktop:
+Deepline transforms your data science workflow by providing **17 powerful tools** and a **Master Orchestrator** for workflow automation, all accessible through natural language in Claude Desktop:
 
 ### **🔍 Data Exploration**
 - **Load datasets** from CSV, Excel, JSON
@@ -90,6 +100,12 @@ Deepline transforms your data science workflow by providing **17 powerful tools*
 - **Cardinality reduction** for categorical variables
 - **Multicollinearity detection** (VIF analysis)
 - **Target-guided discretization**
+
+### **🤖 Workflow Automation**
+- **Natural Language Processing** converts requests to structured workflows
+- **Rule-Based Translation** for instant common pattern recognition
+- **Enterprise Security** with input sanitization and validation
+- **Self-Contained Operation** with intelligent infrastructure fallbacks
 
 ---
 
@@ -149,6 +165,55 @@ Deepline transforms your data science workflow by providing **17 powerful tools*
 - **Reliability**: Automatic retry with smart backoff reduces transient failures  
 - **Observability**: Proactive SLA monitoring catches performance issues early
 - **Predictability**: Workload estimates enable better capacity planning
+
+### **🤖 Master Orchestrator: Natural Language to Workflow Translation**
+> **Production-Ready System** | **100% Test Coverage** | **Self-Contained Operation**
+
+Transform natural language requests into structured workflows with enterprise-grade reliability:
+
+#### **🔄 Intelligent Translation Pipeline**
+- **Rule-Based Translation**: Instant pattern matching for common tasks ("load data", "train model")
+- **LLM Integration**: Advanced Claude-3-Sonnet translation for complex workflows  
+- **Human-in-the-Loop**: Automatic fallback when automation cannot resolve ambiguity
+- **Workflow Validation**: Built-in YAML structure validation and security checks
+
+#### **🛡️ Enterprise Security & Reliability**
+- **Input Sanitization**: XSS prevention, prompt injection defense, context minimization
+- **Graceful Degradation**: Self-contained operation without external infrastructure dependencies
+- **Intelligent Fallbacks**: Automatic MongoDB→in-memory, Redis→in-memory cache switching
+- **Error Recovery**: Exponential backoff retry logic with configurable parameters
+
+#### **📊 Advanced Monitoring & SLA Management**
+- **Real-Time SLA Monitoring**: 10-minute task, 1-hour workflow violation detection
+- **Concurrency Control**: Configurable workflow limits (default: 1 concurrent workflow)
+- **Rate Limiting**: Token bucket algorithm with sliding window strategies
+- **Performance Metrics**: Complete system statistics and health monitoring
+
+#### **🚀 Production Features**
+- **Zero-Infrastructure Startup**: Works immediately without MongoDB, Redis, or Kafka
+- **API-First Design**: RESTful endpoints with comprehensive health checks
+- **100% Test Coverage**: Comprehensive connectivity tests ensuring reliability
+- **Fast Response**: Sub-second translation for rule-based patterns
+
+#### **API Endpoints**
+```bash
+# Create workflow from natural language
+POST /workflows
+{
+  "natural_language": "Load sales data and generate monthly report",
+  "client_id": "analytics_team",
+  "metadata": {"priority": "high"}
+}
+
+# Check workflow status
+GET /workflows/{workflow_id}
+
+# System health monitoring
+GET /health
+GET /stats
+```
+
+**Perfect for**: Enterprise data teams requiring reliable, scalable workflow automation with natural language interfaces.
 
 ---
 

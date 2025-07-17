@@ -71,6 +71,50 @@ class CheckpointsConfig(BaseModel):
     approval_timeout: int = Field(300, gt=0)  # seconds
     auto_approve_small_changes: bool = True
 
+class LLMConfig(BaseModel):
+    model_version: str = Field("claude-3-sonnet-20240229")
+    max_input_length: int = Field(10000, gt=0)
+    llm_max_tokens: int = Field(4000, gt=0)
+    llm_max_retries: int = Field(3, ge=0)
+    temperature: float = Field(0.0, ge=0.0, le=2.0)
+    rail_schema_path: str = Field("orchestrator/rail_schema.xml")
+    system_prompt: str = Field(default="")
+
+class RulesConfig(BaseModel):
+    rule_mappings: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+
+class InfrastructureConfig(BaseModel):
+    mongo_url: str = Field("mongodb://localhost:27017")
+    db_name: str = Field("deepline")
+    kafka_bootstrap_servers: str = Field("localhost:9092")
+    task_requests_topic: str = Field("task.requests")
+    task_events_topic: str = Field("task.events")
+
+class RateLimitsConfig(BaseModel):
+    requests_per_minute: int = Field(60, gt=0)
+    requests_per_hour: int = Field(1000, gt=0)
+    burst_requests: int = Field(10, gt=0)
+
+class SLAConfig(BaseModel):
+    check_interval_seconds: int = Field(30, gt=0)
+    task_timeout_seconds: int = Field(600, gt=0)
+    workflow_timeout_seconds: int = Field(3600, gt=0)
+
+class CacheConfig(BaseModel):
+    redis_url: str = Field("redis://localhost:6379")
+    namespace: str = Field("master_orchestrator")
+    default_ttl: int = Field(3600, gt=0)
+
+class MasterOrchestratorConfig(BaseModel):
+    llm: LLMConfig = Field(default_factory=lambda: LLMConfig())
+    rules: RulesConfig = Field(default_factory=lambda: RulesConfig())
+    enable_human_fallback: bool = Field(True)
+    min_confidence_threshold: float = Field(0.7, ge=0.0, le=1.0)
+    infrastructure: InfrastructureConfig = Field(default_factory=lambda: InfrastructureConfig())
+    rate_limits: RateLimitsConfig = Field(default_factory=lambda: RateLimitsConfig())
+    sla: SLAConfig = Field(default_factory=lambda: SLAConfig())
+    cache: CacheConfig = Field(default_factory=lambda: CacheConfig())
+
 class EDAConfig(BaseModel):
     missing_data: MissingDataConfig
     outlier_detection: OutlierDetectionConfig
@@ -80,6 +124,7 @@ class EDAConfig(BaseModel):
     performance: PerformanceConfig
     checkpoints: CheckpointsConfig
     orchestrator: OrchestratorConfig
+    master_orchestrator: MasterOrchestratorConfig = Field(default_factory=lambda: MasterOrchestratorConfig())
 
 def load_config(config_path: str = "config.yaml") -> EDAConfig:
     """
@@ -127,6 +172,14 @@ def get_config() -> EDAConfig:
                 retry=RetryConfig(),
                 scheduling=SchedulingConfig(),
                 workload_estimate=WorkloadEstimateConfig()
+            ),
+            master_orchestrator=MasterOrchestratorConfig(
+                llm=LLMConfig(),
+                rules=RulesConfig(),
+                infrastructure=InfrastructureConfig(),
+                rate_limits=RateLimitsConfig(),
+                sla=SLAConfig(),
+                cache=CacheConfig()
             )
         )
 

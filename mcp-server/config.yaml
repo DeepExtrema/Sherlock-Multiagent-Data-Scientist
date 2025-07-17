@@ -15,6 +15,78 @@ orchestrator:
     tasks_per_hour: 30
     avg_task_duration_s: 240      # 4 minutes
 
+# Master Orchestrator Configuration
+master_orchestrator:
+  # LLM Translation Settings
+  llm:
+    model_version: "claude-3-sonnet-20240229"
+    max_input_length: 10000
+    llm_max_tokens: 4000
+    llm_max_retries: 3
+    temperature: 0.0
+    rail_schema_path: "orchestrator/rail_schema.xml"
+    system_prompt: |
+      You are a workflow orchestrator that converts natural language requests into structured DSL YAML.
+      Output ONLY valid JSON that follows the expected schema with tasks, agents, and actions.
+      
+  # Rule-based Translation Settings  
+  rules:
+    rule_mappings:
+      "load data":
+        id: "load_data_task"
+        agent: "eda_agent"
+        action: "load_data"
+        params: {"file": "data.csv"}
+      "analyze data":
+        id: "analyze_task"
+        agent: "eda_agent" 
+        action: "analyze_data"
+        params: {}
+      "create visualization":
+        id: "viz_task"
+        agent: "eda_agent"
+        action: "create_visualization"
+        params: {"type": "histogram"}
+      "train model":
+        id: "train_task"
+        agent: "ml_agent"
+        action: "train_model"
+        params: {"algorithm": "random_forest"}
+      "evaluate model":
+        id: "eval_task"
+        agent: "ml_agent"
+        action: "evaluate_model"
+        params: {}
+  
+  # Fallback Settings
+  enable_human_fallback: true
+  min_confidence_threshold: 0.7
+  
+  # Infrastructure Settings
+  mongo_url: "mongodb://localhost:27017"
+  db_name: "deepline"
+  kafka_bootstrap_servers: "localhost:9092"
+  task_requests_topic: "task.requests"
+  task_events_topic: "task.events"
+  
+  # Rate Limiting
+  rate_limits:
+    requests_per_minute: 60
+    requests_per_hour: 1000
+    burst_requests: 10
+  
+  # SLA Monitoring
+  sla:
+    check_interval_seconds: 30
+    task_timeout_seconds: 600     # 10 minutes
+    workflow_timeout_seconds: 3600 # 1 hour
+  
+  # Cache Settings
+  cache:
+    redis_url: "redis://localhost:6379"
+    namespace: "master_orchestrator"
+    default_ttl: 3600
+
 # Missing Data Analysis
 missing_data:
   column_drop_threshold: 0.50  # 50% - drop columns with >50% missing data
