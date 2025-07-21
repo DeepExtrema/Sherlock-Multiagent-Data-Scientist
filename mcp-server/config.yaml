@@ -65,6 +65,27 @@ master_orchestrator:
   # Infrastructure Settings
   mongo_url: "mongodb://localhost:27017"
   db_name: "deepline"
+  
+  # Decision Engine Settings
+  decision:
+    gpu_agents: ["ml_agent", "deep_learning_agent"]
+    cpu_agents: ["eda_agent", "data_agent", "analysis_agent"]
+    max_task_count: 100
+    blocked_actions: []
+    priority_agents: ["critical_analysis_agent"]
+    maintenance_windows: []
+    resource_limits:
+      max_concurrent_gpu_tasks: 2
+      max_concurrent_cpu_tasks: 10
+      max_memory_per_task_gb: 16
+    model_rules: {}
+  
+  # Telemetry & Tracing Settings
+  telemetry:
+    enabled: true
+    service_name: "master-orchestrator"
+    service_version: "1.0.0"
+    otlp_endpoint: "http://localhost:4318/v1/traces"  # Optional: configure for your OTLP collector
   kafka_bootstrap_servers: "localhost:9092"
   task_requests_topic: "task.requests"
   task_events_topic: "task.events"

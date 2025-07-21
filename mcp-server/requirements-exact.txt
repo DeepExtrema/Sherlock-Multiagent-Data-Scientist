@@ -38,4 +38,11 @@ python-dateutil==2.9.0.post0
 # black==latest
 # ruff==latest
 # mypy==latest
-# pytest==latest 
+# pytest==latest
+
+# OpenTelemetry dependencies for telemetry and tracing
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-exporter-otlp-proto-http==1.21.0
+opentelemetry-instrumentation-requests==0.42b0
+opentelemetry-instrumentation-httpx==0.42b0 

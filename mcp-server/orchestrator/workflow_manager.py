@@ -672,6 +672,53 @@ class WorkflowManager:
             logger.error(f"Error getting workflow status: {e}")
             return None
     
+    async def _recompute_and_enqueue_tasks(self, run_id: str):
+        """
+        Recompute task dependencies and enqueue ready tasks.
+        Used during rollback operations to resume workflow execution.
+        
+        Args:
+            run_id: Workflow run ID
+        """
+        try:
+            if self.use_mongo and self.db:
+                # Get all tasks for this workflow
+                tasks = await self.db.tasks.find({"run_id": run_id}).to_list(None)
+                
+                # Build dependency graph
+                task_map = {task["task_id"]: task for task in tasks}
+                
+                # Find tasks that are ready to run (PENDING with no pending dependencies)
+                ready_tasks = []
+                for task in tasks:
+                    if task["status"] == "PENDING":
+                        dependencies = task.get("depends_on", [])
+                        all_deps_complete = True
+                        
+                        for dep_id in dependencies:
+                            dep_task = task_map.get(dep_id)
+                            if not dep_task or dep_task["status"] != "SUCCESS":
+                                all_deps_complete = False
+                                break
+                        
+                        if all_deps_complete:
+                            ready_tasks.append(task)
+                
+                # Enqueue ready tasks
+                for task in ready_tasks:
+                    await self._enqueue_task(run_id, task)
+                    logger.info(f"Re-enqueued task {task['task_id']} after rollback")
+                
+                logger.info(f"Recomputed dependencies and enqueued {len(ready_tasks)} tasks for run {run_id}")
+                
+            else:
+                # In-memory fallback
+                logger.warning("Recompute with in-memory storage has limited functionality")
+                
+        except Exception as e:
+            logger.error(f"Error recomputing tasks for run {run_id}: {e}")
+            raise
+
     def get_statistics(self) -> Dict[str, Any]:
         """Get workflow manager statistics."""
         return {

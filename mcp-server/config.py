@@ -5,7 +5,7 @@ Loads and validates settings from config.yaml.
 
 import yaml
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 
 class RetryConfig(BaseModel):
@@ -105,6 +105,26 @@ class CacheConfig(BaseModel):
     namespace: str = Field("master_orchestrator")
     default_ttl: int = Field(3600, gt=0)
 
+class DecisionConfig(BaseModel):
+    gpu_agents: List[str] = Field(default_factory=lambda: ["ml_agent", "deep_learning_agent"])
+    cpu_agents: List[str] = Field(default_factory=lambda: ["eda_agent", "data_agent"])
+    max_task_count: int = Field(100, ge=1)
+    blocked_actions: List[str] = Field(default_factory=list)
+    priority_agents: List[str] = Field(default_factory=list)
+    maintenance_windows: List[Dict[str, Any]] = Field(default_factory=list)
+    resource_limits: Dict[str, Any] = Field(default_factory=lambda: {
+        "max_concurrent_gpu_tasks": 2,
+        "max_concurrent_cpu_tasks": 10,
+        "max_memory_per_task_gb": 16
+    })
+    model_rules: Dict[str, Any] = Field(default_factory=dict)
+
+class TelemetryConfig(BaseModel):
+    enabled: bool = Field(True)
+    service_name: str = Field("master-orchestrator")
+    service_version: str = Field("1.0.0")
+    otlp_endpoint: Optional[str] = Field(None)
+
 class MasterOrchestratorConfig(BaseModel):
     llm: LLMConfig = Field(default_factory=lambda: LLMConfig())
     rules: RulesConfig = Field(default_factory=lambda: RulesConfig())
@@ -114,6 +134,8 @@ class MasterOrchestratorConfig(BaseModel):
     rate_limits: RateLimitsConfig = Field(default_factory=lambda: RateLimitsConfig())
     sla: SLAConfig = Field(default_factory=lambda: SLAConfig())
     cache: CacheConfig = Field(default_factory=lambda: CacheConfig())
+    decision: DecisionConfig = Field(default_factory=lambda: DecisionConfig())
+    telemetry: TelemetryConfig = Field(default_factory=lambda: TelemetryConfig())
 
 class EDAConfig(BaseModel):
     missing_data: MissingDataConfig

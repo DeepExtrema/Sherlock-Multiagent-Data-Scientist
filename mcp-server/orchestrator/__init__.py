@@ -15,6 +15,8 @@ from .security import SecurityUtils
 from .cache_client import CacheClient
 from .guards import ConcurrencyGuard, RateLimiter
 from .sla_monitor import SLAMonitor
+from .decision_engine import DecisionEngine
+from .telemetry import TelemetryManager, initialize_telemetry
 
 __version__ = "1.0.0"
 __all__ = [
@@ -28,7 +30,10 @@ __all__ = [
     "ConcurrencyGuard",
     "TokenRateLimiter",
     "RateLimiter",
-    "SLAMonitor"
+    "SLAMonitor",
+    "DecisionEngine",
+    "TelemetryManager",
+    "initialize_telemetry"
 ] 
 from .guards import ConcurrencyGuard, TokenRateLimiter
 from .translator import LLMTranslator, RuleBasedTranslator, FallbackRouter, NeedsHumanError
