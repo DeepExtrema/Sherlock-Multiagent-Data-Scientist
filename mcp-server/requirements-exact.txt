@@ -45,4 +45,8 @@ opentelemetry-api==1.21.0
 opentelemetry-sdk==1.21.0
 opentelemetry-exporter-otlp-proto-http==1.21.0
 opentelemetry-instrumentation-requests==0.42b0
-opentelemetry-instrumentation-httpx==0.42b0 
+opentelemetry-instrumentation-httpx==0.42b0
+
+# Workflow Engine dependencies
+redis==5.0.1
+aiohttp==3.9.1 

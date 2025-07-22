@@ -159,4 +159,34 @@ performance:
 checkpoints:
   require_approval: true          # Whether to require human approval
   approval_timeout: 300           # Seconds to wait for approval
-  auto_approve_small_changes: true  # Auto-approve minor transformations 
+  auto_approve_small_changes: true  # Auto-approve minor transformations
+
+# Workflow Engine Configuration
+workflow_engine:
+  alpha: 1.0        # weight – runtime estimate
+  beta: 2.0         # weight – user priority
+  gamma: 3.0        # weight – deadline urgency
+  redis_url: "redis://localhost:6379"
+  max_workers_per_agent:
+    eda_agent: 3
+    ml_agent: 2
+    analysis_agent: 4
+    feature_agent: 2
+  agent_urls:
+    eda_agent: "http://localhost:8001"
+    ml_agent: "http://localhost:8002"
+    analysis_agent: "http://localhost:8003"
+    feature_agent: "http://localhost:8004"
+  enabled_agents: ["eda_agent", "ml_agent", "analysis_agent", "feature_agent"]
+  task_timeout_s: 600
+  poll_interval_s: 0.2
+  retry:
+    max_retries: 3
+    backoff_base_s: 15
+    backoff_max_s: 300
+    poll_interval_s: 1.0
+  deadlock:
+    check_interval_s: 60
+    pending_stale_s: 900   # 15 min
+    workflow_stale_s: 3600 # 1 hour
+    max_dependency_depth: 50 

@@ -125,6 +125,41 @@ class TelemetryConfig(BaseModel):
     service_version: str = Field("1.0.0")
     otlp_endpoint: Optional[str] = Field(None)
 
+class WorkflowEngineRetryConfig(BaseModel):
+    max_retries: int = Field(3, ge=0)
+    backoff_base_s: int = Field(15, gt=0)
+    backoff_max_s: int = Field(300, gt=0)
+    poll_interval_s: float = Field(1.0, gt=0)
+
+class WorkflowEngineDeadlockConfig(BaseModel):
+    check_interval_s: int = Field(60, gt=0)
+    pending_stale_s: int = Field(900, gt=0)  # 15 minutes
+    workflow_stale_s: int = Field(3600, gt=0)  # 1 hour
+    max_dependency_depth: int = Field(50, gt=0)
+
+class WorkflowEngineConfig(BaseModel):
+    alpha: float = Field(1.0, gt=0)  # Runtime weight
+    beta: float = Field(2.0, gt=0)   # User priority weight
+    gamma: float = Field(3.0, gt=0)  # Deadline urgency weight
+    redis_url: str = Field("redis://localhost:6379")
+    max_workers_per_agent: Dict[str, int] = Field(default_factory=lambda: {
+        "eda_agent": 3,
+        "ml_agent": 2,
+        "analysis_agent": 4,
+        "feature_agent": 2
+    })
+    agent_urls: Dict[str, str] = Field(default_factory=lambda: {
+        "eda_agent": "http://localhost:8001",
+        "ml_agent": "http://localhost:8002", 
+        "analysis_agent": "http://localhost:8003",
+        "feature_agent": "http://localhost:8004"
+    })
+    enabled_agents: List[str] = Field(default_factory=lambda: ["eda_agent", "ml_agent", "analysis_agent", "feature_agent"])
+    task_timeout_s: int = Field(600, gt=0)  # 10 minutes
+    poll_interval_s: float = Field(0.2, gt=0)
+    retry: WorkflowEngineRetryConfig = Field(default_factory=lambda: WorkflowEngineRetryConfig())
+    deadlock: WorkflowEngineDeadlockConfig = Field(default_factory=lambda: WorkflowEngineDeadlockConfig())
+
 class MasterOrchestratorConfig(BaseModel):
     llm: LLMConfig = Field(default_factory=lambda: LLMConfig())
     rules: RulesConfig = Field(default_factory=lambda: RulesConfig())
@@ -147,6 +182,7 @@ class EDAConfig(BaseModel):
     checkpoints: CheckpointsConfig
     orchestrator: OrchestratorConfig
     master_orchestrator: MasterOrchestratorConfig = Field(default_factory=lambda: MasterOrchestratorConfig())
+    workflow_engine: WorkflowEngineConfig = Field(default_factory=lambda: WorkflowEngineConfig())
 
 def load_config(config_path: str = "config.yaml") -> EDAConfig:
     """

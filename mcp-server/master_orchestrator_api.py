@@ -25,6 +25,13 @@ from orchestrator import (
 )
 from orchestrator.telemetry import trace_async, get_correlation_id, set_correlation_id, CorrelationID
 
+# Import workflow engine
+try:
+    from workflow_engine import start_engine_async
+    WORKFLOW_ENGINE_AVAILABLE = True
+except ImportError:
+    WORKFLOW_ENGINE_AVAILABLE = False
+
 from config import load_config
 
 # Configure logging
@@ -73,13 +80,14 @@ sla_monitor = None
 security_utils = None
 decision_engine = None
 telemetry_manager = None
+workflow_engine = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     global llm_translator, fallback_router, workflow_manager
     global concurrency_guard, rate_limiter, sla_monitor, security_utils
-    global decision_engine, telemetry_manager
+    global decision_engine, telemetry_manager, workflow_engine
     
     try:
         logger.info("Initializing Master Orchestrator components...")
@@ -138,6 +146,24 @@ async def lifespan(app: FastAPI):
         # Add workflow manager event callback
         workflow_manager.add_event_callback(handle_workflow_event)
         
+        # Initialize and start workflow engine
+        if WORKFLOW_ENGINE_AVAILABLE and config:
+            try:
+                engine_config = config.workflow_engine.dict()
+                workflow_engine = await start_engine_async(engine_config, workflow_manager)
+                
+                # Add event callback to link engine events back to workflow manager
+                if workflow_engine:
+                    workflow_engine.add_event_callback(handle_workflow_event)
+                
+                logger.info("Workflow engine started successfully")
+            except Exception as e:
+                logger.error(f"Failed to start workflow engine: {e}")
+                workflow_engine = None
+        else:
+            logger.warning("Workflow engine not available or config missing")
+            workflow_engine = None
+        
         # Start SLA monitoring
         await sla_monitor.start()
         
@@ -152,6 +178,8 @@ async def lifespan(app: FastAPI):
         # Cleanup
         if sla_monitor:
             await sla_monitor.stop()
+        if workflow_engine:
+            await workflow_engine.stop()
         logger.info("Master Orchestrator shutdown complete")
 
 # Create FastAPI app

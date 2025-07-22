@@ -20,6 +20,13 @@ except ImportError:
     KAFKA_AVAILABLE = False
     MONGO_AVAILABLE = False
 
+# Import workflow engine for task execution
+try:
+    from workflow_engine import get_engine, enqueue_task as engine_enqueue_task
+    WORKFLOW_ENGINE_AVAILABLE = True
+except ImportError:
+    WORKFLOW_ENGINE_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 class WorkflowStatus(Enum):
@@ -351,25 +358,50 @@ class WorkflowManager:
                     }
                 )
             
-            # Build task payload for Kafka
-            task_payload = {
+            # Prepare task metadata for workflow engine
+            task_meta = {
                 "run_id": run_id,
                 "task_id": task_id,
-                "definition": task["definition"],
+                "agent": task["definition"].get("agent"),
+                "action": task["definition"].get("action"),
+                "params": task["definition"].get("params", {}),
+                "depends_on": task["definition"].get("depends_on", []),
+                "user_priority": task["definition"].get("priority", 0.5),
+                "deadline_ts": task["definition"].get("deadline_ts"),
+                "retries": task.get("retries", 0),
                 "attempt": task.get("retries", 0) + 1,
+                "metadata": task.get("metadata", {}),
                 "timestamp": datetime.utcnow().isoformat()
             }
             
-            # Send to Kafka
-            if self.kafka_producer:
+            # Enqueue in workflow engine scheduler (preferred) or fallback to Kafka
+            enqueue_success = False
+            if WORKFLOW_ENGINE_AVAILABLE:
+                try:
+                    enqueue_success = engine_enqueue_task(task_meta)
+                    if enqueue_success:
+                        logger.debug(f"Task {task_id} enqueued in workflow engine scheduler")
+                except Exception as e:
+                    logger.warning(f"Failed to enqueue in workflow engine, falling back to Kafka: {e}")
+            
+            # Fallback to Kafka if workflow engine not available or failed
+            if not enqueue_success and self.kafka_producer:
                 topic = self.config.get("task_requests_topic", "task.requests")
+                kafka_payload = {
+                    "run_id": run_id,
+                    "task_id": task_id,
+                    "definition": task["definition"],
+                    "attempt": task.get("retries", 0) + 1,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
                 self.kafka_producer.produce(
                     topic,
-                    value=json.dumps(task_payload),
+                    value=json.dumps(kafka_payload),
                     key=task_id
                 )
                 self.kafka_producer.flush()
-                logger.debug(f"Task {task_id} sent to Kafka topic {topic}")
+                logger.debug(f"Task {task_id} sent to Kafka topic {topic} (fallback)")
+                enqueue_success = True
             
             # Update statistics
             self.stats["tasks_enqueued"] += 1
