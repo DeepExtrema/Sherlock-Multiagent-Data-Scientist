@@ -369,6 +369,241 @@ Convert the user request to this JSON format."""
         content = f"{prompt}:{self.model_version}:{self.temperature}"
         return hashlib.sha256(content.encode()).hexdigest()[:32]
 
+    async def translate_strict(self, natural_language: str) -> str:
+        """
+        Translate natural language to DSL with strict validation.
+        
+        Args:
+            natural_language: Natural language description
+            
+        Returns:
+            Valid DSL YAML string
+            
+        Raises:
+            NeedsHumanError: If translation requires human intervention
+            ValueError: If translation fails after retries
+        """
+        # First attempt with LLM
+        try:
+            dsl = await self.translate(natural_language)
+            
+            # Basic validation
+            import yaml
+            parsed = yaml.safe_load(dsl)
+            
+            if not isinstance(parsed, dict) or "tasks" not in parsed:
+                raise ValueError("LLM output does not match expected DSL structure")
+            
+            return dsl
+            
+        except NeedsHumanError:
+            # Re-raise needs human errors
+            raise
+        except Exception as e:
+            logger.warning(f"LLM translation failed: {e}")
+            raise ValueError(f"Translation failed: {e}")
+    
+    async def generate_suggestions(self, 
+                                 context: str, 
+                                 domain: str = "data-science",
+                                 complexity: str = "medium") -> List[Dict[str, Any]]:
+        """
+        Generate workflow suggestions based on context.
+        
+        Args:
+            context: Description of what the user wants to achieve
+            domain: Problem domain (data-science, ml, etc.)
+            complexity: Desired complexity level
+            
+        Returns:
+            List of workflow suggestions with descriptions and DSL
+        """
+        try:
+            # Construct prompt for suggestion generation
+            suggestion_prompt = f"""
+            Generate 3 different workflow suggestions for the following request:
+            
+            Context: {context}
+            Domain: {domain}
+            Complexity: {complexity}
+            
+            For each suggestion, provide:
+            1. A clear title (max 50 chars)
+            2. A brief description (max 200 chars) 
+            3. The complete DSL YAML workflow
+            4. Estimated execution time
+            
+            Format as JSON array with objects containing: title, description, dsl, estimated_minutes
+            
+            Focus on practical, executable workflows with realistic task dependencies.
+            """
+            
+            # Use LLM to generate suggestions
+            if hasattr(self, 'llm_client') and self.llm_client:
+                response = await self._call_llm(suggestion_prompt)
+                
+                # Parse response as JSON
+                import json
+                try:
+                    suggestions = json.loads(response)
+                    
+                    # Validate and clean suggestions
+                    validated_suggestions = []
+                    for suggestion in suggestions:
+                        if self._validate_suggestion(suggestion):
+                            validated_suggestions.append(suggestion)
+                    
+                    return validated_suggestions[:3]  # Limit to 3 suggestions
+                    
+                except json.JSONDecodeError:
+                    logger.error("LLM returned invalid JSON for suggestions")
+                    # Fallback to rule-based suggestions
+                    return self._generate_fallback_suggestions(context, domain, complexity)
+            else:
+                # No LLM available, use rule-based fallback
+                return self._generate_fallback_suggestions(context, domain, complexity)
+                
+        except Exception as e:
+            logger.error(f"Suggestion generation failed: {e}")
+            # Return basic fallback suggestions
+            return self._generate_fallback_suggestions(context, domain, complexity)
+    
+    def _validate_suggestion(self, suggestion: Dict[str, Any]) -> bool:
+        """Validate a single suggestion."""
+        required_fields = ["title", "description", "dsl", "estimated_minutes"]
+        
+        for field in required_fields:
+            if field not in suggestion:
+                return False
+        
+        # Validate DSL
+        try:
+            import yaml
+            parsed = yaml.safe_load(suggestion["dsl"])
+            if not isinstance(parsed, dict) or "tasks" not in parsed:
+                return False
+        except:
+            return False
+        
+        return True
+    
+    def _generate_fallback_suggestions(self, 
+                                     context: str, 
+                                     domain: str, 
+                                     complexity: str) -> List[Dict[str, Any]]:
+        """Generate rule-based fallback suggestions."""
+        suggestions = []
+        
+        # Basic data science workflows based on context keywords
+        if "load" in context.lower() or "data" in context.lower():
+            suggestions.append({
+                "title": "Basic Data Loading & Analysis",
+                "description": "Load dataset and perform basic exploratory data analysis",
+                "dsl": """
+name: "Basic Data Analysis"
+tasks:
+  - id: "load_data"
+    agent: "eda_agent"
+    action: "load_data"
+    params:
+      file: "data.csv"
+  - id: "basic_info"
+    agent: "eda_agent"
+    action: "basic_info"
+    depends_on: ["load_data"]
+  - id: "missing_data"
+    agent: "eda_agent"
+    action: "missing_data_analysis"
+    depends_on: ["load_data"]
+""",
+                "estimated_minutes": 5
+            })
+        
+        if "model" in context.lower() or "train" in context.lower():
+            suggestions.append({
+                "title": "ML Model Training Pipeline",
+                "description": "Complete machine learning model training and evaluation",
+                "dsl": """
+name: "ML Training Pipeline"
+tasks:
+  - id: "load_data"
+    agent: "eda_agent"
+    action: "load_data"
+    params:
+      file: "training_data.csv"
+  - id: "preprocess"
+    agent: "feature_agent"
+    action: "preprocess_data"
+    depends_on: ["load_data"]
+  - id: "train_model"
+    agent: "ml_agent"
+    action: "train_model"
+    params:
+      algorithm: "random_forest"
+    depends_on: ["preprocess"]
+  - id: "evaluate"
+    agent: "ml_agent"
+    action: "evaluate_model"
+    depends_on: ["train_model"]
+""",
+                "estimated_minutes": 15
+            })
+        
+        if "visualization" in context.lower() or "plot" in context.lower():
+            suggestions.append({
+                "title": "Data Visualization Dashboard",
+                "description": "Create comprehensive data visualizations and charts",
+                "dsl": """
+name: "Visualization Dashboard"
+tasks:
+  - id: "load_data"
+    agent: "eda_agent"
+    action: "load_data"
+    params:
+      file: "data.csv"
+  - id: "distributions"
+    agent: "eda_agent"
+    action: "create_visualization"
+    params:
+      type: "distribution"
+    depends_on: ["load_data"]
+  - id: "correlations"
+    agent: "eda_agent"
+    action: "create_visualization"
+    params:
+      type: "correlation_heatmap"
+    depends_on: ["load_data"]
+  - id: "summary_stats"
+    agent: "eda_agent"
+    action: "statistical_summary"
+    depends_on: ["load_data"]
+""",
+                "estimated_minutes": 8
+            })
+        
+        # If no specific keywords found, provide a generic analysis workflow
+        if not suggestions:
+            suggestions.append({
+                "title": "General Data Analysis",
+                "description": "Comprehensive data analysis workflow",
+                "dsl": """
+name: "General Analysis"
+tasks:
+  - id: "load_data"
+    agent: "eda_agent"
+    action: "load_data"
+    params:
+      file: "data.csv"
+  - id: "analyze"
+    agent: "analysis_agent"
+    action: "analyze_data"
+    depends_on: ["load_data"]
+""",
+                "estimated_minutes": 10
+            })
+        
+        return suggestions[:3]
+
 class RuleBasedTranslator:
     """Rule-based translator for common patterns."""
     

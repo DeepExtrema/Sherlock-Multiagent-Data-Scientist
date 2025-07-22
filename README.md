@@ -73,13 +73,28 @@ Deepline is a comprehensive **AI-powered data science platform** that integrates
 | **ML Monitoring** | `drift_analysis`, `model_performance_report` | 🔶 Partial | Model performance and data drift |
 | **Debug Tools** | `debug_drift_summary`, `debug_perf_summary` | 🛠️ Dev Only | Development and testing utilities |
 
-### **🤖 Master Orchestrator**
+### **🚀 Hybrid API - Async Translation Workflow (NEW)**
+
+- **Token-Based Async Translation**: Submit natural language → get token → poll for DSL results
+- **Redis-Backed Queue**: Scalable translation queue with graceful in-memory fallback
+- **Background Workers**: Dedicated translation workers with retry logic and timeout handling
+- **Comprehensive Validation**: Input sanitization, DSL validation, and circular dependency detection
+- **Production-Ready**: Rate limiting, monitoring, and enterprise-grade error handling
+
+#### **New API Endpoints**
+- **`POST /api/v1/workflows/translate`** - Submit natural language for async translation
+- **`GET /api/v1/translation/{token}`** - Poll translation status and retrieve DSL
+- **`POST /api/v1/workflows/dsl`** - Execute DSL directly with validation
+- **`POST /api/v1/workflows/suggest`** - Generate workflow suggestions
+
+### **🤖 Master Orchestrator (Enhanced)**
 
 - **Natural Language Processing**: Convert plain English to structured workflows
-- **Rule-Based Translation**: Instant recognition of common data science patterns
+- **Rule-Based Translation**: Instant recognition of common data science patterns  
 - **Security Layer**: Input sanitization with XSS prevention and prompt injection defense
 - **Graceful Degradation**: Self-contained operation with intelligent infrastructure fallbacks
 - **SLA Monitoring**: Real-time task and workflow monitoring with configurable thresholds
+- **Async Architecture**: Non-blocking translation with horizontal scaling capability
 
 ### **📈 Infrastructure Components**
 
@@ -117,16 +132,29 @@ python launch_server.py
    ```
    "Load the iris.csv dataset and show me basic info"
    ```
-3. **Verify Response**: You should see data analysis results
+3. **Test Hybrid API**: Try the new async translation:
+   ```bash
+   # Submit async translation
+   curl -X POST http://127.0.0.1:8001/api/v1/workflows/translate \
+     -H "Content-Type: application/json" \
+     -d '{"natural_language": "Load iris data and create scatter plot"}'
+   
+   # Returns: {"token": "abc123...", "status": "queued"}
+   ```
+4. **Verify Response**: You should see data analysis results
 
-### **🚀 Launch Master Orchestrator**
+### **🚀 Launch Master Orchestrator + Hybrid API**
 
 ```powershell
-# Master Orchestrator API (Natural Language Workflows)
-python -m uvicorn master_orchestrator_api:app --host 127.0.0.1 --port 8000
+# Enhanced Master Orchestrator with Hybrid API (Port 8001)
+python -m uvicorn master_orchestrator_api:app --host 127.0.0.1 --port 8001
 
-# Test API endpoints
-curl http://127.0.0.1:8000/health
+# Test new Hybrid API endpoints
+curl http://127.0.0.1:8001/health
+curl http://127.0.0.1:8001/api/v1/workflows/suggest -X POST -H "Content-Type: application/json" -d '{"context": "analyze sales data"}'
+
+# Legacy API still available (Port 8000)  
+python -m uvicorn master_orchestrator_api:app --host 127.0.0.1 --port 8000
 
 # Full Infrastructure (Enterprise)
 docker-compose up -d
@@ -280,35 +308,43 @@ Deepline now includes a **production-ready workflow execution engine** that tran
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-#### **Master Orchestrator System**
+#### **Hybrid API + Master Orchestrator System**
 ```
 +-----------+      +--------------+      +--------------------+
 |  Clients  | ---> |  API Gateway | ---> | Master Orchestrator |
 +-----------+      +--------------+      +--------------------+
-                                               |      |      |
-                                               v      v      v
-                                         +----------+ +------------+
-                                         |  DSL     | |  LLM       |
-                                         |  Parser  | | Translator |
-                                         | & Validator|(Guardrails)|
-                                         +----------+ +------------+
-                                               \      |      /
-                                                \     v     /
-                                                 +-----------+
-                                                 |  Fallback |
-                                                 |  Router   |
-                                                 +-----------+
-                                                      |
-                                                      v
-                                                +-----------+
-                                                | Workflow  |
-                                                | Manager   |
-                                                +-----------+
-                                                      |
-         +----------------+          +----------------+         +-----------+
-         |    MongoDB     |<-------->|    Kafka       |<------->|   Cache   |
-         | (runs, tasks)  |          | (requests,evts)|         | (LLM memo)|
-         +----------------+          +----------------+         +-----------+
+                          |                      |      |      |
+                          v                      v      v      v
+                 +------------------+      +----------+ +------------+
+                 |   Hybrid API     |      |  DSL     | |  LLM       |
+                 |   Router         |      |  Parser  | | Translator |
+                 | ================ |      | & Validator|(Guardrails)|
+                 | /translate       |      +----------+ +------------+
+                 | /translation/{t} |            \      |      /
+                 | /dsl            |             \     v     /
+                 | /suggest        |              +-----------+
+                 +------------------+             |  Fallback |
+                          |                       |  Router   |
+                          v                       +-----------+
+                 +------------------+                  |
+                 | Translation Queue|                  v
+                 | ================ |            +-----------+
+                 | Redis Backend    |            | Workflow  |
+                 | Token Tracking   |            | Manager   |
+                 | Status Polling   |            +-----------+
+                 +------------------+                  |
+                          |                           |
+                          v                           v
+                 +------------------+         +----------------+
+                 |Translation Worker|         |    MongoDB     |
+                 | ================ |<------->| (runs, tasks)  |
+                 | Background Proc  |         +----------------+
+                 | LLM Calls        |                  |
+                 | Validation       |                  v
+                 | Error Handling   |         +----------------+
+                 +------------------+         |    Kafka       |
+                                              | (requests,evts)|
+                                              +----------------+
                                                       |
                                                       v
                                                   +--------+
@@ -527,10 +563,49 @@ Goal: Prepare data for machine learning
 Expected Result: ML-ready dataset in ~4 minutes
 ```
 
-### **Workflow 4: Automated Orchestration (API)**
+### **Workflow 4: Hybrid API - Async Translation (NEW)**
 
 ```bash
-# Natural language to structured workflow
+# Step 1: Submit natural language for async translation
+curl -X POST http://localhost:8001/api/v1/workflows/translate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "natural_language": "Load sales data, detect anomalies, and create summary report",
+    "client_id": "analytics_team",
+    "priority": 8
+  }'
+
+# Response: {"token": "abc123def456...", "status": "queued", "estimated_completion_seconds": 45}
+
+# Step 2: Poll for translation completion
+curl http://localhost:8001/api/v1/translation/abc123def456...
+
+# Step 3: When status="done", execute the generated DSL
+curl -X POST http://localhost:8001/api/v1/workflows/dsl \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dsl_yaml": "<generated_dsl_from_step_2>"
+  }'
+```
+
+### **Workflow 5: Direct DSL Execution**
+
+```bash
+# Execute DSL directly with validation
+curl -X POST http://localhost:8001/api/v1/workflows/dsl \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dsl_yaml": "name: Quick Analysis\ntasks:\n  - id: load\n    agent: eda_agent\n    action: load_data\n    params:\n      file: data.csv\n  - id: analyze\n    agent: eda_agent\n    action: basic_info\n    depends_on: [load]",
+    "validate_only": false
+  }'
+
+# Returns: Workflow execution with real-time status
+```
+
+### **Workflow 6: Legacy Orchestration (API)**
+
+```bash
+# Synchronous natural language to structured workflow
 curl -X POST http://localhost:8000/workflows \
   -H "Content-Type: application/json" \
   -d '{
@@ -559,6 +634,7 @@ deepline/
 │   │
 │   ├── 📁 orchestrator/             # Master Orchestrator
 │   │   ├── 📄 translator.py         # Natural language processing
+│   │   ├── 📄 translation_queue.py  # 🆕 Async translation queue & workers
 │   │   ├── 📄 workflow_manager.py   # Workflow execution
 │   │   ├── 📄 security.py           # Input validation & sanitization
 │   │   ├── 📄 cache_client.py       # Caching with fallbacks
@@ -566,6 +642,10 @@ deepline/
 │   │   ├── 📄 sla_monitor.py        # SLA monitoring
 │   │   ├── 📄 decision_engine.py    # Policy decision engine
 │   │   └── 📄 telemetry.py          # OpenTelemetry tracing
+│   │
+│   ├── 📁 api/                      # 🆕 Hybrid API Implementation
+│   │   ├── 📄 __init__.py           # API package initialization
+│   │   └── 📄 hybrid_router.py      # Async translation endpoints
 │   │
 │   ├── 📁 workflow_engine/          # 🆕 Production Workflow Engine
 │   │   ├── 📄 __init__.py           # Engine bootstrap & API
@@ -575,8 +655,14 @@ deepline/
 │   │   ├── 📄 deadlock_monitor.py   # Dependency cycle detection
 │   │   └── 📄 state.py              # Redis state management
 │   │
-│   ├── 📄 master_orchestrator_api.py # FastAPI orchestrator service
+│   ├── 📄 master_orchestrator_api.py # FastAPI orchestrator service (enhanced)
 │   ├── 📄 test_master_orchestrator.py # Comprehensive tests (35 tests)
+│   ├── 📄 test_hybrid_api.py        # 🆕 Hybrid API integration tests
+│   ├── 📄 validate_implementation.py # 🆕 Static analysis & validation
+│   ├── 📄 bug_hunter.py             # 🆕 Bug detection & security analysis
+│   ├── 📄 connectivity_tester.py    # 🆕 Logic & connectivity testing
+│   ├── 📄 final_validation.py       # 🆕 Comprehensive validation runner
+│   ├── 📄 TESTING_REPORT.md         # 🆕 Complete testing & bug hunting report
 │   └── 📄 reports/                  # Generated analysis reports
 │
 ├── 📁 dashboard/                     # Web dashboard
@@ -798,10 +884,12 @@ python -c "import psutil; print(f'Available RAM: {psutil.virtual_memory().availa
 ### **📖 Available Documentation**
 - [`docs/INSTALLATION.md`](docs/INSTALLATION.md) - Detailed setup instructions
 - [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) - Complete user manual  
+- [`docs/HYBRID_API.md`](docs/HYBRID_API.md) - 🆕 Hybrid API comprehensive guide
 - [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) - Configuration reference
 - [`docs/EXAMPLES.md`](docs/EXAMPLES.md) - Comprehensive workflow examples
 - [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) - Development guidelines
 - [`docs/CONNECTIVITY_TEST_REPORT.md`](docs/CONNECTIVITY_TEST_REPORT.md) - Test results
+- [`mcp-server/TESTING_REPORT.md`](mcp-server/TESTING_REPORT.md) - 🆕 Bug hunting & validation report
 
 ### **🚀 API Documentation**
 - **Master Orchestrator API**: `http://localhost:8000/docs` (when running)

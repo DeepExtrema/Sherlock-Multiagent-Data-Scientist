@@ -66,6 +66,16 @@ master_orchestrator:
   mongo_url: "mongodb://localhost:27017"
   db_name: "deepline"
   
+  # Hybrid API Translation Queue Settings
+  translation_queue:
+    redis_url: "redis://localhost:6379"
+    queue_name: "translation:q"
+    token_prefix: "translation:"
+    timeout_seconds: 300          # 5 minutes
+    max_retries: 3
+    retry_delay_seconds: 5
+    cleanup_interval_seconds: 300 # Clean up expired tokens every 5 minutes
+  
   # Decision Engine Settings
   decision:
     gpu_agents: ["ml_agent", "deep_learning_agent"]
@@ -84,7 +94,7 @@ master_orchestrator:
   telemetry:
     enabled: true
     service_name: "master-orchestrator"
-    service_version: "1.0.0"
+    service_version: "2.0.0"
     otlp_endpoint: "http://localhost:4318/v1/traces"  # Optional: configure for your OTLP collector
   kafka_bootstrap_servers: "localhost:9092"
   task_requests_topic: "task.requests"

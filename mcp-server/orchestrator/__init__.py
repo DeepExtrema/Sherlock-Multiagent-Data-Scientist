@@ -3,17 +3,19 @@ Master Orchestrator Package
 
 This package contains the core orchestrator components for the Deepline system:
 - LLM translation with Guardrails
+- Async translation queue with Redis backing
 - Rule-based fallback systems
 - Workflow management and execution
 - Rate limiting and concurrency control
 - SLA monitoring and alerting
 """
 
-from .translator import LLMTranslator, RuleBasedTranslator, FallbackRouter
+from .translator import LLMTranslator, RuleBasedTranslator, FallbackRouter, NeedsHumanError
+from .translation_queue import TranslationQueue, TranslationWorker, TranslationStatus
 from .workflow_manager import WorkflowManager
 from .security import SecurityUtils
 from .cache_client import CacheClient
-from .guards import ConcurrencyGuard, RateLimiter
+from .guards import ConcurrencyGuard, RateLimiter, TokenRateLimiter
 from .sla_monitor import SLAMonitor
 from .decision_engine import DecisionEngine
 from .telemetry import TelemetryManager, initialize_telemetry
@@ -24,6 +26,9 @@ __all__ = [
     "RuleBasedTranslator", 
     "FallbackRouter",
     "NeedsHumanError",
+    "TranslationQueue",
+    "TranslationWorker", 
+    "TranslationStatus",
     "WorkflowManager",
     "SecurityUtils",
     "CacheClient",
@@ -34,6 +39,4 @@ __all__ = [
     "DecisionEngine",
     "TelemetryManager",
     "initialize_telemetry"
-] 
-from .guards import ConcurrencyGuard, TokenRateLimiter
-from .translator import LLMTranslator, RuleBasedTranslator, FallbackRouter, NeedsHumanError
+]

@@ -2,6 +2,7 @@
 Master Orchestrator API
 
 FastAPI application that provides the main orchestrator endpoints for workflow management.
+Enhanced with Hybrid API for async translation workflow.
 """
 
 import asyncio
@@ -18,12 +19,16 @@ from pydantic import BaseModel
 # Import orchestrator components
 from orchestrator import (
     LLMTranslator, RuleBasedTranslator, FallbackRouter,
+    TranslationQueue, TranslationWorker, TranslationStatus,
     WorkflowManager, SecurityUtils, CacheClient,
     ConcurrencyGuard, TokenRateLimiter, SLAMonitor,
     DecisionEngine, TelemetryManager, initialize_telemetry,
     NeedsHumanError
 )
 from orchestrator.telemetry import trace_async, get_correlation_id, set_correlation_id, CorrelationID
+
+# Import API routers
+from api.hybrid_router import create_hybrid_router
 
 # Import workflow engine
 try:
@@ -46,7 +51,7 @@ except Exception as e:
     logger.error(f"Failed to load configuration: {e}")
     config = None
 
-# Request/Response models
+# Request/Response models (legacy endpoints)
 class WorkflowRequest(BaseModel):
     natural_language: Optional[str] = None
     dsl_yaml: Optional[str] = None
@@ -82,12 +87,18 @@ decision_engine = None
 telemetry_manager = None
 workflow_engine = None
 
+# Hybrid API components
+translation_queue = None
+translation_worker = None
+hybrid_router = None
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     global llm_translator, fallback_router, workflow_manager
     global concurrency_guard, rate_limiter, sla_monitor, security_utils
     global decision_engine, telemetry_manager, workflow_engine
+    global translation_queue, translation_worker, hybrid_router
     
     try:
         logger.info("Initializing Master Orchestrator components...")
@@ -146,6 +157,43 @@ async def lifespan(app: FastAPI):
         # Add workflow manager event callback
         workflow_manager.add_event_callback(handle_workflow_event)
         
+        # Initialize Hybrid API components
+        logger.info("Initializing Hybrid API components...")
+        
+        # Initialize translation queue
+        cache_config = orchestrator_config.get("cache", {})
+        redis_url = cache_config.get("redis_url", "redis://localhost:6379")
+        
+        translation_queue = TranslationQueue(
+            redis_url=redis_url,
+            timeout_seconds=300  # 5 minutes
+        )
+        await translation_queue.initialize()
+        
+        # Initialize translation worker
+        translation_worker = TranslationWorker(
+            translation_queue=translation_queue,
+            llm_translator=llm_translator,
+            max_retries=3,
+            retry_delay=5.0
+        )
+        await translation_worker.start()
+        
+        # Create hybrid router
+        hybrid_router = create_hybrid_router(
+            translation_queue=translation_queue,
+            llm_translator=llm_translator,
+            workflow_manager=workflow_manager,
+            decision_engine=decision_engine,
+            security_utils=security_utils,
+            rate_limiter=rate_limiter
+        )
+        
+        # Include hybrid router in the app
+        app.include_router(hybrid_router)
+        
+        logger.info("Hybrid API components initialized successfully")
+        
         # Initialize and start workflow engine
         if WORKFLOW_ENGINE_AVAILABLE and config:
             try:
@@ -176,17 +224,25 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         # Cleanup
+        logger.info("Shutting down Master Orchestrator...")
+        
+        if translation_worker:
+            await translation_worker.stop()
+            logger.info("Translation worker stopped")
+            
         if sla_monitor:
             await sla_monitor.stop()
+            
         if workflow_engine:
             await workflow_engine.stop()
+            
         logger.info("Master Orchestrator shutdown complete")
 
 # Create FastAPI app
 app = FastAPI(
     title="Master Orchestrator API",
-    description="Natural language to workflow orchestration with LLM translation and fallback systems",
-    version="1.0.0",
+    description="Natural language to workflow orchestration with LLM translation, async queue, and fallback systems",
+    version="2.0.0",  # Bumped version for hybrid API
     lifespan=lifespan
 )
 
@@ -255,15 +311,14 @@ async def handle_workflow_event(event: Dict[str, Any]):
     """Handle workflow events from WorkflowManager."""
     logger.info(f"Workflow event: {event['type']} for {event.get('run_id', 'unknown')}")
 
-# Main API endpoints
+# Legacy API endpoints (maintain backward compatibility)
 @app.post("/workflows", response_model=WorkflowResponse)
-@trace_async("create_workflow", operation_type="api_endpoint")
-async def create_workflow(request: Request, workflow_request: WorkflowRequest):
+@trace_async("create_workflow_legacy", operation_type="api_endpoint")
+async def create_workflow_legacy(request: Request, workflow_request: WorkflowRequest):
     """
-    Create a new workflow from natural language or DSL YAML.
+    Legacy workflow creation endpoint.
     
-    Implements the main workflow creation logic with concurrency control,
-    rate limiting, and fallback translation.
+    Maintains backward compatibility while recommending migration to hybrid API.
     """
     try:
         # Set up correlation ID
@@ -336,7 +391,8 @@ async def create_workflow(request: Request, workflow_request: WorkflowRequest):
                         "workflow_id": run_id,
                         "status": "needs_human",
                         "message": "Human intervention required",
-                        "context": e.context
+                        "context": e.context,
+                        "recommendation": "Consider using /api/v1/workflows/translate for async processing"
                     }
                 )
         
@@ -384,11 +440,6 @@ async def create_workflow(request: Request, workflow_request: WorkflowRequest):
                         message="Workflow started successfully"
                     )
                     
-                    # Add correlation ID to response headers
-                    if telemetry_manager:
-                        # This would be set in response headers if FastAPI supported it directly
-                        pass
-                    
                     return response
                 else:
                     raise HTTPException(
@@ -419,11 +470,7 @@ async def create_workflow(request: Request, workflow_request: WorkflowRequest):
 @app.post("/workflows/{run_id}/human_submit", response_model=WorkflowResponse)
 @trace_async("human_submit", operation_type="api_endpoint")
 async def human_submit(run_id: str, submission: HumanSubmissionRequest):
-    """
-    Submit human-corrected workflow definition.
-    
-    Used when the initial translation requires human intervention.
-    """
+    """Submit human-corrected workflow definition."""
     try:
         # Parse corrected YAML
         import yaml
@@ -550,61 +597,10 @@ async def cancel_workflow(run_id: str, reason: str = "User cancelled"):
             detail="Internal server error"
         )
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint."""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0",
-        "components": {
-            "config_loaded": config is not None,
-            "llm_translator": llm_translator is not None,
-            "workflow_manager": workflow_manager is not None,
-            "sla_monitor": sla_monitor is not None and sla_monitor.is_running if sla_monitor else False,
-            "decision_engine": decision_engine is not None,
-            "telemetry_manager": telemetry_manager is not None and telemetry_manager.enabled if telemetry_manager else False
-        }
-    }
-
-@app.get("/stats")
-async def get_statistics():
-    """Get system statistics."""
-    stats = {}
-    
-    if workflow_manager:
-        stats["workflow_manager"] = workflow_manager.get_statistics()
-    
-    if concurrency_guard:
-        stats["concurrency"] = concurrency_guard.get_stats()
-    
-    if sla_monitor:
-        stats["sla_monitor"] = sla_monitor.get_statistics()
-    
-    if decision_engine:
-        stats["decision_engine"] = decision_engine.get_statistics()
-    
-    if telemetry_manager:
-        stats["telemetry"] = {
-            "enabled": telemetry_manager.enabled,
-            "service_name": telemetry_manager.service_name,
-            "current_trace_id": telemetry_manager.get_current_trace_id()
-        }
-    
-    return stats
-
 @app.post("/runs/{run_id}/rollback")
 @trace_async("rollback_run", operation_type="api_endpoint")
 async def rollback_run(run_id: str, req: RollbackRequest):
-    """
-    Rollback a workflow to a previous checkpoint.
-    
-    This endpoint implements the rollback functionality by:
-    1. Finding the last N successful tasks
-    2. Restoring state from checkpoints
-    3. Marking tasks as PENDING for re-execution
-    4. Re-enqueueing the affected task subgraph
-    """
+    """Rollback a workflow to a previous checkpoint."""
     try:
         if not workflow_manager:
             raise HTTPException(
@@ -639,10 +635,6 @@ async def rollback_run(run_id: str, req: RollbackRequest):
                     # Restore checkpoint if available
                     checkpoint_ref = task.get("checkpoint_ref")
                     if checkpoint_ref:
-                        # In a real implementation, this would:
-                        # 1. Load checkpoint data from storage
-                        # 2. Restore task state
-                        # 3. Reset any downstream effects
                         logger.info(f"Restoring checkpoint for task {task['task_id']}: {checkpoint_ref}")
                     
                     # Mark task as PENDING for re-execution
@@ -736,6 +728,58 @@ async def rollback_run(run_id: str, req: RollbackRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Rollback failed: {str(e)}"
         )
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "2.0.0",
+        "api_versions": {
+            "legacy": "/workflows",
+            "hybrid": "/api/v1"
+        },
+        "components": {
+            "config_loaded": config is not None,
+            "llm_translator": llm_translator is not None,
+            "workflow_manager": workflow_manager is not None,
+            "translation_queue": translation_queue is not None,
+            "translation_worker": translation_worker is not None and translation_worker._running,
+            "sla_monitor": sla_monitor is not None and sla_monitor.is_running if sla_monitor else False,
+            "decision_engine": decision_engine is not None,
+            "telemetry_manager": telemetry_manager is not None and telemetry_manager.enabled if telemetry_manager else False
+        }
+    }
+
+@app.get("/stats")
+async def get_statistics():
+    """Get system statistics."""
+    stats = {}
+    
+    if workflow_manager:
+        stats["workflow_manager"] = workflow_manager.get_statistics()
+    
+    if concurrency_guard:
+        stats["concurrency"] = concurrency_guard.get_stats()
+    
+    if sla_monitor:
+        stats["sla_monitor"] = sla_monitor.get_statistics()
+    
+    if decision_engine:
+        stats["decision_engine"] = decision_engine.get_statistics()
+    
+    if translation_queue:
+        stats["translation_queue"] = translation_queue.get_stats()
+    
+    if telemetry_manager:
+        stats["telemetry"] = {
+            "enabled": telemetry_manager.enabled,
+            "service_name": telemetry_manager.service_name,
+            "current_trace_id": telemetry_manager.get_current_trace_id()
+        }
+    
+    return stats
 
 if __name__ == "__main__":
     import uvicorn
