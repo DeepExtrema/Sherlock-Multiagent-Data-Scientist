@@ -87,6 +87,21 @@ Deepline is a comprehensive **AI-powered data science platform** that integrates
 - **`POST /api/v1/workflows/dsl`** - Execute DSL directly with validation
 - **`POST /api/v1/workflows/suggest`** - Generate workflow suggestions
 
+### **🛡️ Deadlock Monitor + Graceful Cancellation (NEW)**
+
+- **Automatic Deadlock Detection**: MongoDB aggregation scanning for stuck workflows
+- **Configurable Thresholds**: 15-minute task staleness, 1-hour workflow timeout
+- **Smart Alerting**: Slack/PagerDuty webhook integration with detailed context
+- **Graceful Cancellation**: API endpoints for user and system-initiated cancellation
+- **Worker Protection**: Redis-based cancellation signals prevent wasted execution
+- **Production Monitoring**: Real-time stats, manual scanning, and health endpoints
+
+#### **Cancellation API Endpoints**
+- **`PUT /runs/{run_id}/cancel`** - Cancel a running workflow with reason tracking
+- **`GET /runs/{run_id}/cancel`** - Check cancellation status and metadata
+- **`GET /runs/cancelled`** - List cancelled workflows with pagination
+- **`DELETE /runs/{run_id}/cancel`** - Force complete cancellation (admin only)
+
 ### **🤖 Master Orchestrator (Enhanced)**
 
 - **Natural Language Processing**: Convert plain English to structured workflows
@@ -308,7 +323,7 @@ Deepline now includes a **production-ready workflow execution engine** that tran
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-#### **Hybrid API + Master Orchestrator System**
+#### **Hybrid API + Master Orchestrator + Deadlock System**
 ```
 +-----------+      +--------------+      +--------------------+
 |  Clients  | ---> |  API Gateway | ---> | Master Orchestrator |
@@ -343,13 +358,24 @@ Deepline now includes a **production-ready workflow execution engine** that tran
                  | Validation       |                  v
                  | Error Handling   |         +----------------+
                  +------------------+         |    Kafka       |
-                                              | (requests,evts)|
-                                              +----------------+
-                                                      |
-                                                      v
-                                                  +--------+
-                                                  | Agents |
-                                                  |(EDA,   |
+                          |                   | (requests,evts)|
+                          v                   +----------------+
+                 +------------------+<----------------|
+                 |   Cancel Router  |                 |
+                 | ================ |                 v
+                 | /cancel          |         +----------------+
+                 | /cancelled       |         | Deadlock       |
+                 | /force-cancel    |         | Monitor        |
+                 +------------------+         | ============== |
+                          |                   | MongoDB Scan   |
+                          v                   | Alert/Cancel   |
+                 +------------------+         | Health Check   |
+                 |   Redis Cache    |         +----------------+
+                 | ================ |                 |
+                 | Cancelled Runs   |                 v
+                 | Rate Limits      |             +--------+
+                 | Session Data     |             | Agents |
+                 +------------------+             |(EDA,   |
                                                   | Feature,|
                                                   | Model) |
                                                   +--------+
@@ -588,7 +614,30 @@ curl -X POST http://localhost:8001/api/v1/workflows/dsl \
   }'
 ```
 
-### **Workflow 5: Direct DSL Execution**
+### **Workflow 5: Deadlock Monitoring + Cancellation (NEW)**
+
+```bash
+# Monitor workflow status
+curl http://localhost:8001/runs/workflow_123/cancel
+
+# Cancel a running workflow
+curl -X PUT http://localhost:8001/runs/workflow_123/cancel \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason": "user requested", 
+    "force": false
+  }'
+
+# Response: {"run_id": "workflow_123", "status": "CANCELLING", "message": "..."}
+
+# List all cancelled workflows with pagination
+curl "http://localhost:8001/runs/cancelled?limit=10&client_id=analytics_team"
+
+# Force complete cancellation (admin only)
+curl -X DELETE http://localhost:8001/runs/workflow_123/cancel
+```
+
+### **Workflow 6: Direct DSL Execution**
 
 ```bash
 # Execute DSL directly with validation
@@ -641,11 +690,13 @@ deepline/
 │   │   ├── 📄 guards.py             # Rate limiting & concurrency
 │   │   ├── 📄 sla_monitor.py        # SLA monitoring
 │   │   ├── 📄 decision_engine.py    # Policy decision engine
+│   │   ├── 📄 deadlock_monitor.py   # 🆕 Workflow deadlock detection & auto-cancel
 │   │   └── 📄 telemetry.py          # OpenTelemetry tracing
 │   │
 │   ├── 📁 api/                      # 🆕 Hybrid API Implementation
 │   │   ├── 📄 __init__.py           # API package initialization
-│   │   └── 📄 hybrid_router.py      # Async translation endpoints
+│   │   ├── 📄 hybrid_router.py      # Async translation endpoints
+│   │   └── 📄 cancel_router.py      # 🆕 Workflow cancellation endpoints
 │   │
 │   ├── 📁 workflow_engine/          # 🆕 Production Workflow Engine
 │   │   ├── 📄 __init__.py           # Engine bootstrap & API
@@ -885,6 +936,7 @@ python -c "import psutil; print(f'Available RAM: {psutil.virtual_memory().availa
 - [`docs/INSTALLATION.md`](docs/INSTALLATION.md) - Detailed setup instructions
 - [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) - Complete user manual  
 - [`docs/HYBRID_API.md`](docs/HYBRID_API.md) - 🆕 Hybrid API comprehensive guide
+- [`docs/DEADLOCK_MONITORING.md`](docs/DEADLOCK_MONITORING.md) - 🆕 Deadlock monitoring & cancellation
 - [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) - Configuration reference
 - [`docs/EXAMPLES.md`](docs/EXAMPLES.md) - Comprehensive workflow examples
 - [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) - Development guidelines

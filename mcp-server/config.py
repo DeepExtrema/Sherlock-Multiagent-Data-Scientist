@@ -21,11 +21,20 @@ class WorkloadEstimateConfig(BaseModel):
     tasks_per_hour: int = Field(30, gt=0)
     avg_task_duration_s: int = Field(240, gt=0)  # 4 minutes
 
+class DeadlockConfig(BaseModel):
+    check_interval_s: int = Field(60, gt=0)        # how often the loop scans MongoDB
+    pending_stale_s: int = Field(900, gt=0)        # task idle threshold (15 min)
+    workflow_stale_s: int = Field(3600, gt=0)      # workflow idle threshold (1 hour)
+    cancel_on_deadlock: bool = Field(True)         # auto-cancel or just alert
+    alert_webhook: str = Field("")                 # optional Slack / PagerDuty URL
+    max_dependency_depth: int = Field(50, gt=0)    # prevent infinite dependency chains
+
 class OrchestratorConfig(BaseModel):
     max_concurrent_workflows: int = Field(1, gt=0)
     retry: RetryConfig = Field(default_factory=lambda: RetryConfig())
     scheduling: SchedulingConfig = Field(default_factory=lambda: SchedulingConfig())
     workload_estimate: WorkloadEstimateConfig = Field(default_factory=lambda: WorkloadEstimateConfig())
+    deadlock: DeadlockConfig = Field(default_factory=lambda: DeadlockConfig())
 
 class MissingDataConfig(BaseModel):
     column_drop_threshold: float = Field(0.50, ge=0.0, le=1.0)

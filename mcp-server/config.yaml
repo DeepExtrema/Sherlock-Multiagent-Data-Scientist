@@ -14,6 +14,14 @@ orchestrator:
   workload_estimate:
     tasks_per_hour: 30
     avg_task_duration_s: 240      # 4 minutes
+  # Deadlock Detection and Cancellation
+  deadlock:
+    check_interval_s: 60          # how often the loop scans MongoDB
+    pending_stale_s: 900          # task idle threshold (15 min)
+    workflow_stale_s: 3600        # workflow idle threshold (1 hour)
+    cancel_on_deadlock: true      # auto-cancel or just alert
+    alert_webhook: ""             # optional Slack / PagerDuty URL
+    max_dependency_depth: 50      # prevent infinite dependency chains
 
 # Master Orchestrator Configuration
 master_orchestrator:

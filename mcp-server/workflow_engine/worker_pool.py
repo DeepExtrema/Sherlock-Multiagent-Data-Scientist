@@ -151,10 +151,18 @@ class WorkerPool:
             worker_id: Worker identifier
         """
         task_id = task_meta.get("task_id", "unknown")
+        run_id = task_meta.get("run_id", "unknown")
         stats = self.worker_stats[worker_id]
         start_time = time.time()
         
         try:
+            # Check if workflow has been cancelled before starting execution
+            if await self._is_workflow_cancelled(run_id):
+                logger.info(f"Skipping task {task_id} - workflow {run_id} has been cancelled")
+                await self._emit_event("TASK_CANCELLED", task_meta, 
+                                     reason="workflow_cancelled")
+                return
+            
             logger.info(f"Worker {worker_id} executing task {task_id}")
             
             # Update task start time
@@ -273,6 +281,46 @@ class WorkerPool:
                     callback(event)
             except Exception as e:
                 logger.error(f"Error in event callback: {e}")
+    
+    async def _is_workflow_cancelled(self, run_id: str) -> bool:
+        """
+        Check if a workflow has been cancelled by looking in Redis.
+        
+        Args:
+            run_id: Workflow run ID to check
+            
+        Returns:
+            True if workflow is cancelled, False otherwise
+        """
+        try:
+            # Check Redis for cancelled runs
+            if hasattr(self.scheduler, 'redis') and self.scheduler.redis:
+                redis_client = self.scheduler.redis.redis_client
+                if redis_client:
+                    return await redis_client.sismember("cancelled_runs", run_id)
+            
+            # Fallback: Check with workflow manager directly
+            try:
+                import sys
+                import os
+                # Add the parent directory to the path for imports
+                parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                if parent_dir not in sys.path:
+                    sys.path.append(parent_dir)
+                
+                from orchestrator.workflow_manager import get_workflow_status
+                workflow_info = await get_workflow_status(run_id)
+                if workflow_info:
+                    status = workflow_info.get("status", "")
+                    return status in ["CANCELLED", "CANCELLING"]
+            except Exception:
+                pass  # Fallback failed, assume not cancelled
+            
+            return False
+            
+        except Exception as e:
+            logger.warning(f"Error checking cancellation status for run {run_id}: {e}")
+            return False  # Assume not cancelled on error
     
     def get_stats(self) -> Dict[str, Any]:
         """Get worker pool statistics."""

@@ -19,6 +19,7 @@ from .guards import ConcurrencyGuard, RateLimiter, TokenRateLimiter
 from .sla_monitor import SLAMonitor
 from .decision_engine import DecisionEngine
 from .telemetry import TelemetryManager, initialize_telemetry
+from .deadlock_monitor import DeadlockMonitor
 
 __version__ = "1.0.0"
 __all__ = [
@@ -38,5 +39,6 @@ __all__ = [
     "SLAMonitor",
     "DecisionEngine",
     "TelemetryManager",
-    "initialize_telemetry"
+    "initialize_telemetry",
+    "DeadlockMonitor"
 ]

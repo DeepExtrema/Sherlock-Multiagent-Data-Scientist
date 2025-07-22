@@ -25,10 +25,12 @@ from orchestrator import (
     DecisionEngine, TelemetryManager, initialize_telemetry,
     NeedsHumanError
 )
+from orchestrator.deadlock_monitor import DeadlockMonitor
 from orchestrator.telemetry import trace_async, get_correlation_id, set_correlation_id, CorrelationID
 
 # Import API routers
 from api.hybrid_router import create_hybrid_router
+from api.cancel_router import create_cancel_router
 
 # Import workflow engine
 try:
@@ -92,6 +94,10 @@ translation_queue = None
 translation_worker = None
 hybrid_router = None
 
+# Deadlock monitoring and cancellation
+deadlock_monitor = None
+cancel_router = None
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
@@ -99,6 +105,7 @@ async def lifespan(app: FastAPI):
     global concurrency_guard, rate_limiter, sla_monitor, security_utils
     global decision_engine, telemetry_manager, workflow_engine
     global translation_queue, translation_worker, hybrid_router
+    global deadlock_monitor, cancel_router
     
     try:
         logger.info("Initializing Master Orchestrator components...")
@@ -215,6 +222,32 @@ async def lifespan(app: FastAPI):
         # Start SLA monitoring
         await sla_monitor.start()
         
+        # Initialize and start deadlock monitor
+        if config and workflow_manager and workflow_manager.db:
+            try:
+                deadlock_config = config.orchestrator.deadlock
+                deadlock_monitor = DeadlockMonitor(
+                    db=workflow_manager.db,
+                    config=deadlock_config
+                )
+                await deadlock_monitor.start()
+                logger.info("Deadlock monitor started successfully")
+            except Exception as e:
+                logger.error(f"Failed to start deadlock monitor: {e}")
+                deadlock_monitor = None
+        else:
+            logger.warning("Deadlock monitor not started - database or config unavailable")
+            deadlock_monitor = None
+        
+        # Create and include cancellation router
+        try:
+            cancel_router = create_cancel_router()
+            app.include_router(cancel_router)
+            logger.info("Cancellation API endpoints added successfully")
+        except Exception as e:
+            logger.error(f"Failed to add cancellation router: {e}")
+            cancel_router = None
+        
         logger.info("Master Orchestrator initialized successfully")
         
         yield
@@ -229,6 +262,10 @@ async def lifespan(app: FastAPI):
         if translation_worker:
             await translation_worker.stop()
             logger.info("Translation worker stopped")
+            
+        if deadlock_monitor:
+            await deadlock_monitor.stop()
+            logger.info("Deadlock monitor stopped")
             
         if sla_monitor:
             await sla_monitor.stop()

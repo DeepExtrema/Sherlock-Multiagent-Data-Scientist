@@ -751,6 +751,289 @@ class WorkflowManager:
             logger.error(f"Error recomputing tasks for run {run_id}: {e}")
             raise
 
+    async def cancel_workflow(self, run_id: str, reason: str = "user-requested", 
+                             force: bool = False, cancelled_by: str = "system") -> bool:
+        """
+        Cancel a running workflow gracefully.
+        
+        Args:
+            run_id: Workflow run ID to cancel
+            reason: Reason for cancellation
+            force: Force cancellation even if tasks are running
+            cancelled_by: Who or what initiated the cancellation
+            
+        Returns:
+            True if cancellation was successful, False otherwise
+        """
+        try:
+            if self.use_mongo and self.db:
+                # Get workflow info
+                workflow = await self.db.runs.find_one({"run_id": run_id})
+                if not workflow:
+                    logger.warning(f"Cannot cancel workflow {run_id}: not found")
+                    return False
+                
+                current_status = workflow.get("status")
+                if current_status in ["COMPLETED", "FAILED", "CANCELLED"]:
+                    logger.warning(f"Cannot cancel workflow {run_id}: already in {current_status} state")
+                    return False
+                
+                # Update workflow status
+                cancellation_time = datetime.utcnow()
+                await self.db.runs.update_one(
+                    {"run_id": run_id},
+                    {
+                        "$set": {
+                            "status": "CANCELLING",
+                            "cancellation_reason": reason,
+                            "cancelled_by": cancelled_by,
+                            "cancelled_at": cancellation_time,
+                            "updated_at": cancellation_time
+                        }
+                    }
+                )
+                
+                # Cancel pending and queued tasks
+                result = await self.db.tasks.update_many(
+                    {"run_id": run_id, "status": {"$in": ["PENDING", "QUEUED"]}},
+                    {
+                        "$set": {
+                            "status": "CANCELLED",
+                            "cancellation_reason": reason,
+                            "updated_at": cancellation_time
+                        }
+                    }
+                )
+                
+                cancelled_task_count = result.modified_count
+                
+                # For running tasks, mark for cancellation and let workers handle them
+                running_result = await self.db.tasks.update_many(
+                    {"run_id": run_id, "status": "RUNNING"},
+                    {
+                        "$set": {
+                            "cancellation_requested": True,
+                            "cancellation_reason": reason,
+                            "updated_at": cancellation_time
+                        }
+                    }
+                )
+                
+                # Record cancelled runs in Redis for worker checking
+                try:
+                    import redis
+                    redis_client = redis.Redis.from_url(
+                        self.config.get("redis_url", "redis://localhost:6379"),
+                        decode_responses=True
+                    )
+                    redis_client.sadd("cancelled_runs", run_id)
+                    redis_client.expire("cancelled_runs", 86400)  # 24 hours
+                except (ImportError, Exception) as e:
+                    logger.warning(f"Could not mark run {run_id} as cancelled in Redis: {e}")
+                
+                logger.info(f"Cancelled workflow {run_id}: {cancelled_task_count} tasks cancelled, "
+                           f"{running_result.modified_count} running tasks marked for cancellation")
+                
+                # Send cancellation event
+                await self._send_event("WORKFLOW_CANCELLATION_INITIATED", {
+                    "run_id": run_id,
+                    "reason": reason,
+                    "cancelled_by": cancelled_by,
+                    "cancelled_tasks": cancelled_task_count,
+                    "running_tasks_marked": running_result.modified_count
+                })
+                
+                return True
+                
+            else:
+                # In-memory fallback
+                if run_id in self.in_memory_workflows:
+                    workflow = self.in_memory_workflows[run_id]
+                    workflow["status"] = "CANCELLED"
+                    workflow["cancellation_reason"] = reason
+                    workflow["cancelled_by"] = cancelled_by
+                    workflow["cancelled_at"] = datetime.utcnow()
+                    
+                    # Cancel tasks
+                    for task_id, task in self.in_memory_tasks.items():
+                        if task.get("run_id") == run_id and task["status"] in ["PENDING", "QUEUED", "RUNNING"]:
+                            task["status"] = "CANCELLED"
+                            task["cancellation_reason"] = reason
+                    
+                    logger.info(f"Cancelled in-memory workflow {run_id}")
+                    return True
+                else:
+                    logger.warning(f"Cannot cancel workflow {run_id}: not found in in-memory storage")
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"Error cancelling workflow {run_id}: {e}", exc_info=True)
+            return False
+
+    async def get_workflow_status(self, run_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get detailed workflow status including cancellation information.
+        
+        Args:
+            run_id: Workflow run ID
+            
+        Returns:
+            Workflow status dictionary or None if not found
+        """
+        try:
+            if self.use_mongo and self.db:
+                workflow = await self.db.runs.find_one({"run_id": run_id})
+                if not workflow:
+                    return None
+                
+                # Get task counts
+                task_counts = {}
+                async for doc in self.db.tasks.aggregate([
+                    {"$match": {"run_id": run_id}},
+                    {"$group": {"_id": "$status", "count": {"$sum": 1}}}
+                ]):
+                    task_counts[doc["_id"]] = doc["count"]
+                
+                return {
+                    "run_id": run_id,
+                    "workflow_name": workflow.get("workflow_name"),
+                    "status": workflow.get("status"),
+                    "created_at": workflow.get("created_at"),
+                    "updated_at": workflow.get("updated_at"),
+                    "cancelled_at": workflow.get("cancelled_at"),
+                    "cancellation_reason": workflow.get("cancellation_reason"),
+                    "cancelled_by": workflow.get("cancelled_by"),
+                    "client_id": workflow.get("client_id"),
+                    "task_counts": task_counts,
+                    "cancelled_task_count": task_counts.get("CANCELLED", 0)
+                }
+            else:
+                # In-memory fallback
+                workflow = self.in_memory_workflows.get(run_id)
+                if not workflow:
+                    return None
+                
+                return {
+                    "run_id": run_id,
+                    "workflow_name": workflow.get("workflow_name"),
+                    "status": workflow.get("status"),
+                    "created_at": workflow.get("created_at"),
+                    "updated_at": workflow.get("updated_at"),
+                    "cancelled_at": workflow.get("cancelled_at"),
+                    "cancellation_reason": workflow.get("cancellation_reason"),
+                    "cancelled_by": workflow.get("cancelled_by"),
+                    "client_id": workflow.get("client_id")
+                }
+                
+        except Exception as e:
+            logger.error(f"Error getting workflow status for {run_id}: {e}")
+            return None
+
+    async def list_cancelled_workflows(self, limit: int = 50, offset: int = 0, 
+                                     client_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        List cancelled workflows with pagination.
+        
+        Args:
+            limit: Maximum number of results
+            offset: Number of results to skip
+            client_id: Optional filter by client ID
+            
+        Returns:
+            List of cancelled workflow information
+        """
+        try:
+            if self.use_mongo and self.db:
+                query = {"status": {"$in": ["CANCELLED", "CANCELLING"]}}
+                if client_id:
+                    query["client_id"] = client_id
+                
+                workflows = []
+                async for workflow in self.db.runs.find(query).sort("cancelled_at", -1).skip(offset).limit(limit):
+                    # Get task count
+                    task_count = await self.db.tasks.count_documents({"run_id": workflow["run_id"]})
+                    
+                    workflows.append({
+                        "run_id": workflow["run_id"],
+                        "workflow_name": workflow.get("workflow_name"),
+                        "status": workflow["status"],
+                        "cancelled_at": workflow.get("cancelled_at"),
+                        "cancellation_reason": workflow.get("cancellation_reason", ""),
+                        "cancelled_by": workflow.get("cancelled_by"),
+                        "task_count": task_count,
+                        "client_id": workflow.get("client_id")
+                    })
+                
+                return workflows
+            else:
+                # In-memory fallback
+                cancelled = [
+                    w for w in self.in_memory_workflows.values()
+                    if w.get("status") in ["CANCELLED", "CANCELLING"] and
+                    (not client_id or w.get("client_id") == client_id)
+                ]
+                
+                # Sort by cancelled_at descending
+                cancelled.sort(key=lambda x: x.get("cancelled_at", datetime.min), reverse=True)
+                
+                return cancelled[offset:offset + limit]
+                
+        except Exception as e:
+            logger.error(f"Error listing cancelled workflows: {e}")
+            return []
+
+    async def force_complete_cancellation(self, run_id: str) -> bool:
+        """
+        Force complete cancellation of a workflow, marking it as CANCELLED.
+        
+        Args:
+            run_id: Workflow run ID
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if self.use_mongo and self.db:
+                # Update workflow to CANCELLED
+                result = await self.db.runs.update_one(
+                    {"run_id": run_id, "status": "CANCELLING"},
+                    {
+                        "$set": {
+                            "status": "CANCELLED",
+                            "updated_at": datetime.utcnow()
+                        }
+                    }
+                )
+                
+                if result.modified_count == 0:
+                    return False
+                
+                # Mark any remaining running tasks as cancelled
+                await self.db.tasks.update_many(
+                    {"run_id": run_id, "status": "RUNNING"},
+                    {
+                        "$set": {
+                            "status": "CANCELLED",
+                            "updated_at": datetime.utcnow()
+                        }
+                    }
+                )
+                
+                logger.info(f"Force completed cancellation for workflow {run_id}")
+                return True
+            else:
+                # In-memory fallback
+                workflow = self.in_memory_workflows.get(run_id)
+                if workflow and workflow.get("status") == "CANCELLING":
+                    workflow["status"] = "CANCELLED"
+                    workflow["updated_at"] = datetime.utcnow()
+                    return True
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error force completing cancellation for {run_id}: {e}")
+            return False
+
     def get_statistics(self) -> Dict[str, Any]:
         """Get workflow manager statistics."""
         return {
@@ -758,4 +1041,65 @@ class WorkflowManager:
             "mongo_available": self.db is not None,
             "kafka_available": self.kafka_producer is not None,
             "active_callbacks": len(self.event_callbacks)
-        } 
+        }
+
+
+# Module-level convenience functions for external use
+async def cancel_workflow_internal(run_id: str, reason: str = "system", 
+                                 force: bool = False, cancelled_by: str = "system") -> bool:
+    """
+    Module-level function for cancelling workflows.
+    
+    This is used by the deadlock monitor and cancellation API.
+    """
+    try:
+        # Import here to avoid circular imports
+        from ..config import get_config
+        config = get_config()
+        
+        # Create a temporary workflow manager instance
+        manager = WorkflowManager(config.master_orchestrator.infrastructure.dict())
+        return await manager.cancel_workflow(run_id, reason, force, cancelled_by)
+    except Exception as e:
+        logger.error(f"Error in cancel_workflow_internal: {e}")
+        return False
+
+
+async def get_workflow_status(run_id: str) -> Optional[Dict[str, Any]]:
+    """Module-level function for getting workflow status."""
+    try:
+        from ..config import get_config
+        config = get_config()
+        
+        manager = WorkflowManager(config.master_orchestrator.infrastructure.dict())
+        return await manager.get_workflow_status(run_id)
+    except Exception as e:
+        logger.error(f"Error in get_workflow_status: {e}")
+        return None
+
+
+async def list_cancelled_workflows(limit: int = 50, offset: int = 0, 
+                                 client_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Module-level function for listing cancelled workflows."""
+    try:
+        from ..config import get_config
+        config = get_config()
+        
+        manager = WorkflowManager(config.master_orchestrator.infrastructure.dict())
+        return await manager.list_cancelled_workflows(limit, offset, client_id)
+    except Exception as e:
+        logger.error(f"Error in list_cancelled_workflows: {e}")
+        return []
+
+
+async def force_complete_cancellation(run_id: str) -> bool:
+    """Module-level function for force completing cancellation."""
+    try:
+        from ..config import get_config
+        config = get_config()
+        
+        manager = WorkflowManager(config.master_orchestrator.infrastructure.dict())
+        return await manager.force_complete_cancellation(run_id)
+    except Exception as e:
+        logger.error(f"Error in force_complete_cancellation: {e}")
+        return False 
