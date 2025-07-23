@@ -22,6 +22,11 @@ from .telemetry import TelemetryManager, initialize_telemetry
 from .deadlock_monitor import DeadlockMonitor
 from .dsl_repair_pipeline import repair as repair_dsl
 from .llm_client import LlmClient, call_llm
+from .agent_registry import (
+    get_agent_matrix, get_agent_names, get_agent_actions,
+    is_valid_agent, is_valid_action, is_valid,
+    get_agent_stats, validate_workflow_tasks
+)
 
 __version__ = "1.0.0"
 __all__ = [
@@ -45,5 +50,13 @@ __all__ = [
     "DeadlockMonitor",
     "repair_dsl",
     "LlmClient",
-    "call_llm"
+    "call_llm",
+    "get_agent_matrix",
+    "get_agent_names", 
+    "get_agent_actions",
+    "is_valid_agent",
+    "is_valid_action",
+    "is_valid",
+    "get_agent_stats",
+    "validate_workflow_tasks"
 ]

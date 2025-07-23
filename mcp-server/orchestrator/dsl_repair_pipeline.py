@@ -27,6 +27,7 @@ from pydantic import ValidationError
 from .llm_client import call_llm
 from ..config import get_config
 from .translator import NeedsHumanError
+from .agent_registry import is_valid
 
 logger = logging.getLogger(__name__)
 
@@ -58,10 +59,7 @@ if GUARDRAILS_AVAILABLE and _schema_path.exists():
 
 def _validate_agent_action(agent: str, action: str, config) -> bool:
     """Validate that the action is valid for the given agent."""
-    agent_actions = config.master_orchestrator.agent_actions
-    if agent in agent_actions:
-        return action in agent_actions[agent]
-    return False
+    return is_valid(agent, action)
 
 def _detect_circular_dependencies(tasks: List[Dict[str, Any]]) -> List[str]:
     """Detect circular dependencies in tasks."""
@@ -233,13 +231,10 @@ async def repair_dsl(original_yaml: str, db: AsyncIOMotorDatabase) -> Dict[str, 
             if "tasks" not in parsed or not parsed["tasks"]:
                 raise ValueError("Missing or empty 'tasks' section")
             
-            # 5. Validate agent-action combinations
-            for i, task in enumerate(parsed["tasks"]):
-                if "agent" not in task or "action" not in task:
-                    raise ValueError(f"Task {i} missing agent or action")
-                
-                if not _validate_agent_action(task["agent"], task["action"], config):
-                    raise ValueError(f"Invalid action '{task['action']}' for agent '{task['agent']}'")
+            # 5. Validate agent-action combinations using agent registry
+            agent_errors = validate_workflow_tasks(parsed["tasks"])
+            if agent_errors:
+                raise ValueError(f"Agent validation failed: {'; '.join(agent_errors)}")
             
             # 6. Check for circular dependencies
             cycles = _detect_circular_dependencies(parsed["tasks"])

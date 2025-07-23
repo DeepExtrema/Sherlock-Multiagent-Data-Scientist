@@ -31,6 +31,7 @@ from orchestrator.telemetry import trace_async, get_correlation_id, set_correlat
 # Import API routers
 from api.hybrid_router import create_hybrid_router
 from api.cancel_router import create_cancel_router
+from api.agent_router import create_agent_router
 
 # Import workflow engine
 try:
@@ -97,6 +98,7 @@ hybrid_router = None
 # Deadlock monitoring and cancellation
 deadlock_monitor = None
 cancel_router = None
+agent_router = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -238,7 +240,7 @@ async def lifespan(app: FastAPI):
         else:
             logger.warning("Deadlock monitor not started - database or config unavailable")
             deadlock_monitor = None
-        
+
         # Create and include cancellation router
         try:
             cancel_router = create_cancel_router()
@@ -247,7 +249,16 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"Failed to add cancellation router: {e}")
             cancel_router = None
-        
+
+        # Create and include agent router
+        try:
+            agent_router = create_agent_router()
+            app.include_router(agent_router)
+            logger.info("Agent API endpoints added successfully")
+        except Exception as e:
+            logger.error(f"Failed to add agent router: {e}")
+            agent_router = None
+
         logger.info("Master Orchestrator initialized successfully")
         
         yield

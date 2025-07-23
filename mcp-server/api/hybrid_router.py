@@ -25,6 +25,7 @@ from ..orchestrator.workflow_manager import WorkflowManager
 from ..orchestrator.decision_engine import DecisionEngine
 from ..orchestrator.security import SecurityUtils
 from ..orchestrator.guards import TokenRateLimiter
+from ..orchestrator.agent_registry import validate_workflow_tasks
 from ..orchestrator.telemetry import trace_async, get_correlation_id, set_correlation_id, CorrelationID
 
 logger = logging.getLogger(__name__)

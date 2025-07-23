@@ -5,7 +5,7 @@ Loads and validates settings from config.yaml.
 
 import yaml
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Literal
 from pydantic import BaseModel, Field
 
 class RetryConfig(BaseModel):
@@ -189,12 +189,18 @@ class AgentActionsConfig(BaseModel):
     model: List[str] = Field(default_factory=lambda: ["train", "predict", "evaluate", "tune", "deploy"])
     custom: List[str] = Field(default_factory=lambda: ["execute", "process", "run_script", "call_api"])
 
+class AgentRoutingConfig(BaseModel):
+    mode: Literal["header", "topic"] = Field("header")
+    default_topic: str = Field("task.requests")
+    topic_prefix: str = Field("task.requests.")
+
 class MasterOrchestratorConfig(BaseModel):
     infrastructure: InfrastructureConfig = Field(default_factory=lambda: InfrastructureConfig())
     orchestrator: OrchestratorConfig = Field(default_factory=lambda: OrchestratorConfig())
     llm: LlmConfig = Field(default_factory=lambda: LlmConfig())
     dsl_repair: DslRepairConfig = Field(default_factory=lambda: DslRepairConfig())
     agent_actions: AgentActionsConfig = Field(default_factory=lambda: AgentActionsConfig())
+    agent_routing: AgentRoutingConfig = Field(default_factory=lambda: AgentRoutingConfig())
 
 class EDAConfig(BaseModel):
     missing_data: MissingDataConfig

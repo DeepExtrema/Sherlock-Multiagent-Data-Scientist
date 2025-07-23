@@ -250,3 +250,9 @@ agent_actions:
     - process
     - run_script
     - call_api 
+
+# Agent Routing Configuration
+agent_routing:
+  mode: "header"      # header | topic
+  default_topic: "task.requests"     # header mode
+  topic_prefix: "task.requests."     # topic mode 
