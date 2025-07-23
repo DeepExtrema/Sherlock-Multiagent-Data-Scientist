@@ -169,17 +169,32 @@ class WorkflowEngineConfig(BaseModel):
     retry: WorkflowEngineRetryConfig = Field(default_factory=lambda: WorkflowEngineRetryConfig())
     deadlock: WorkflowEngineDeadlockConfig = Field(default_factory=lambda: WorkflowEngineDeadlockConfig())
 
+class LlmConfig(BaseModel):
+    endpoint: str = Field("http://localhost:11434/api/generate")
+    fallback_provider: str = Field("openai")
+    model_name: str = Field("llama2-13b")
+    temperature: float = Field(0.0, ge=0.0, le=2.0)
+    max_tokens: int = Field(800, gt=0, le=4000)
+
+class DslRepairConfig(BaseModel):
+    enable_auto_repair: bool = Field(True)
+    max_repair_attempts: int = Field(3, gt=0, le=10)
+    timeout_seconds: int = Field(30, gt=0, le=300)
+    strict_json_output: bool = Field(True)
+    log_repair_attempts: bool = Field(True)
+
+class AgentActionsConfig(BaseModel):
+    eda: List[str] = Field(default_factory=lambda: ["analyze", "clean", "transform", "explore", "preprocess"])
+    fe: List[str] = Field(default_factory=lambda: ["create_visualization", "build_dashboard", "generate_report", "create_chart", "export_data"])
+    model: List[str] = Field(default_factory=lambda: ["train", "predict", "evaluate", "tune", "deploy"])
+    custom: List[str] = Field(default_factory=lambda: ["execute", "process", "run_script", "call_api"])
+
 class MasterOrchestratorConfig(BaseModel):
-    llm: LLMConfig = Field(default_factory=lambda: LLMConfig())
-    rules: RulesConfig = Field(default_factory=lambda: RulesConfig())
-    enable_human_fallback: bool = Field(True)
-    min_confidence_threshold: float = Field(0.7, ge=0.0, le=1.0)
     infrastructure: InfrastructureConfig = Field(default_factory=lambda: InfrastructureConfig())
-    rate_limits: RateLimitsConfig = Field(default_factory=lambda: RateLimitsConfig())
-    sla: SLAConfig = Field(default_factory=lambda: SLAConfig())
-    cache: CacheConfig = Field(default_factory=lambda: CacheConfig())
-    decision: DecisionConfig = Field(default_factory=lambda: DecisionConfig())
-    telemetry: TelemetryConfig = Field(default_factory=lambda: TelemetryConfig())
+    orchestrator: OrchestratorConfig = Field(default_factory=lambda: OrchestratorConfig())
+    llm: LlmConfig = Field(default_factory=lambda: LlmConfig())
+    dsl_repair: DslRepairConfig = Field(default_factory=lambda: DslRepairConfig())
+    agent_actions: AgentActionsConfig = Field(default_factory=lambda: AgentActionsConfig())
 
 class EDAConfig(BaseModel):
     missing_data: MissingDataConfig
@@ -241,7 +256,7 @@ def get_config() -> EDAConfig:
                 workload_estimate=WorkloadEstimateConfig()
             ),
             master_orchestrator=MasterOrchestratorConfig(
-                llm=LLMConfig(),
+                llm=LlmConfig(),
                 rules=RulesConfig(),
                 infrastructure=InfrastructureConfig(),
                 rate_limits=RateLimitsConfig(),

@@ -208,3 +208,45 @@ workflow_engine:
     pending_stale_s: 900   # 15 min
     workflow_stale_s: 3600 # 1 hour
     max_dependency_depth: 50 
+
+# LLM Configuration
+llm:
+  endpoint: "http://localhost:11434/api/generate"
+  fallback_provider: "openai"          # uses OPENAI_API_KEY env var
+  model_name: "llama2-13b"
+  temperature: 0.0
+  max_tokens: 800
+
+# DSL Repair Configuration
+dsl_repair:
+  enable_auto_repair: true
+  max_repair_attempts: 3
+  timeout_seconds: 30
+  strict_json_output: true
+  log_repair_attempts: true
+
+# Agent-Action Matrix for validation
+agent_actions:
+  eda:
+    - analyze
+    - clean
+    - transform
+    - explore
+    - preprocess
+  fe:
+    - create_visualization
+    - build_dashboard
+    - generate_report
+    - create_chart
+    - export_data
+  model:
+    - train
+    - predict
+    - evaluate
+    - tune
+    - deploy
+  custom:
+    - execute
+    - process
+    - run_script
+    - call_api 

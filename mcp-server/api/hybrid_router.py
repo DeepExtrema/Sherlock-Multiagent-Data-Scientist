@@ -288,17 +288,45 @@ def create_hybrid_router(
             correlation_id = CorrelationID.generate()
             set_correlation_id(correlation_id)
             
-            # Parse and validate DSL
+            # Parse and validate DSL with repair pipeline
             try:
+                # Try direct parsing first
                 workflow_def = yaml.safe_load(request.dsl_yaml)
+                validation_result = await _validate_workflow_dsl(workflow_def, request.dsl_yaml)
+                
+                # If validation fails, try repair pipeline
+                if not validation_result["valid"] and workflow_manager and workflow_manager.db:
+                    try:
+                        from ..orchestrator.dsl_repair_pipeline import repair as repair_dsl
+                        repaired_workflow = await repair_dsl(request.dsl_yaml, workflow_manager.db)
+                        workflow_def = repaired_workflow
+                        validation_result = await _validate_workflow_dsl(workflow_def, request.dsl_yaml)
+                        validation_result["repaired"] = True
+                        validation_result["repair_message"] = "DSL was automatically repaired"
+                    except Exception as repair_error:
+                        logger.warning(f"DSL repair failed: {repair_error}")
+                        # Continue with original validation result
+                        
             except yaml.YAMLError as e:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid YAML format: {e}"
-                )
-            
-            # Enhanced validation
-            validation_result = await _validate_workflow_dsl(workflow_def, request.dsl_yaml)
+                # Try repair pipeline for malformed YAML
+                if workflow_manager and workflow_manager.db:
+                    try:
+                        from ..orchestrator.dsl_repair_pipeline import repair as repair_dsl
+                        repaired_workflow = await repair_dsl(request.dsl_yaml, workflow_manager.db)
+                        workflow_def = repaired_workflow
+                        validation_result = await _validate_workflow_dsl(workflow_def, request.dsl_yaml)
+                        validation_result["repaired"] = True
+                        validation_result["repair_message"] = "Malformed YAML was automatically repaired"
+                    except Exception as repair_error:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Invalid YAML format and repair failed: {e}"
+                        )
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid YAML format: {e}"
+                    )
             
             if not validation_result["valid"]:
                 if request.validate_only:

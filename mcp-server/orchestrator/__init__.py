@@ -20,15 +20,17 @@ from .sla_monitor import SLAMonitor
 from .decision_engine import DecisionEngine
 from .telemetry import TelemetryManager, initialize_telemetry
 from .deadlock_monitor import DeadlockMonitor
+from .dsl_repair_pipeline import repair as repair_dsl
+from .llm_client import LlmClient, call_llm
 
 __version__ = "1.0.0"
 __all__ = [
     "LLMTranslator",
-    "RuleBasedTranslator", 
+    "RuleBasedTranslator",
     "FallbackRouter",
     "NeedsHumanError",
     "TranslationQueue",
-    "TranslationWorker", 
+    "TranslationWorker",
     "TranslationStatus",
     "WorkflowManager",
     "SecurityUtils",
@@ -40,5 +42,8 @@ __all__ = [
     "DecisionEngine",
     "TelemetryManager",
     "initialize_telemetry",
-    "DeadlockMonitor"
+    "DeadlockMonitor",
+    "repair_dsl",
+    "LlmClient",
+    "call_llm"
 ]
