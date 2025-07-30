@@ -1,0 +1,136 @@
+name: Refinery Agent CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'mcp-server/refinery_agent.py'
+      - 'mcp-server/orchestrator/refinery_agent_integration.py'
+      - 'mcp-server/test_refinery_*.py'
+      - 'mcp-server/refinery_agent.Dockerfile'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'mcp-server/refinery_agent.py'
+      - 'mcp-server/orchestrator/refinery_agent_integration.py'
+      - 'mcp-server/test_refinery_*.py'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11, 3.12]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      working-directory: mcp-server
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio
+        # Install minimal deps for testing
+        pip install pydantic fastapi httpx redis motor
+    
+    - name: Run refinery agent tests
+      working-directory: mcp-server
+      run: |
+        pytest -q test_refinery_basic.py -v
+        pytest -q test_refinery_edge_cases.py -v
+    
+    - name: Validate configuration
+      working-directory: mcp-server
+      run: |
+        python -c "
+        import yaml
+        with open('config.yaml') as f:
+          config = yaml.safe_load(f)
+        assert 'refinery_agent' in config.get('agent_actions', {}), 'refinery_agent not in config'
+        actions = config['agent_actions']['refinery_agent']
+        assert len(actions) == 15, f'Expected 15 actions, got {len(actions)}'
+        print('✅ Configuration validation passed')
+        "
+    
+    - name: Lint with basic checks
+      working-directory: mcp-server
+      run: |
+        # Basic syntax check
+        python -m py_compile refinery_agent.py
+        python -m py_compile orchestrator/refinery_agent_integration.py
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: deepline/refinery-agent
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: mcp-server
+        file: mcp-server/refinery_agent.Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Test Docker image
+      run: |
+        # Pull and test the image
+        docker pull deepline/refinery-agent:latest
+        docker run --name test-refinery -d -p 8005:8005 deepline/refinery-agent:latest
+        sleep 10
+        
+        # Health check
+        curl -f http://localhost:8005/health || exit 1
+        echo "✅ Docker health check passed"
+        
+        # Cleanup
+        docker stop test-refinery
+        docker rm test-refinery
+
+  security-scan:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'deepline/refinery-agent:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'

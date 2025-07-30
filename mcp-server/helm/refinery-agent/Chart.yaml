@@ -1,0 +1,16 @@
+apiVersion: v2
+name: refinery-agent
+description: Refinery Agent for Data Quality and Feature Engineering
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/deepline/mcp-server
+sources:
+  - https://github.com/deepline/mcp-server
+maintainers:
+  - name: Deepline Team
+    email: team@deepline.io
+keywords:
+  - data-quality
+  - feature-engineering
+  - ml-pipeline
