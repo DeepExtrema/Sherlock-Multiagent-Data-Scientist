@@ -1,0 +1,166 @@
+# Staging environment values for refinery-agent
+# Override default values for staging deployment
+
+replicaCount: 2
+
+image:
+  repository: deepline/refinery-agent
+  pullPolicy: Always
+  tag: "staging"
+
+# Staging-specific configuration
+config:
+  environment: staging
+  logLevel: DEBUG
+  
+  # Redis configuration for staging
+  redis:
+    url: "redis://redis-staging:6379"
+    database: 1
+    maxConnections: 10
+    
+  # MongoDB configuration for staging
+  mongodb:
+    url: "mongodb://mongodb-staging:27017"
+    database: deepline_staging
+    
+  # Performance settings for staging
+  performance:
+    maxDatasetSize: 500000  # Smaller for staging
+    sampleSize: 5000
+    cacheEnabled: true
+    cacheTtl: 1800  # 30 minutes
+    maxWorkers: 2
+    timeout: 120
+
+# Resource limits for staging
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# Staging-specific environment variables
+env:
+  - name: DRIFT_NUMERIC_P95_THRESHOLD
+    value: "0.15"
+  - name: DRIFT_CATEGORICAL_PSI_THRESHOLD
+    value: "0.3"
+  - name: MISSING_VALUES_THRESHOLD
+    value: "0.6"
+  - name: CORRELATION_THRESHOLD
+    value: "0.9"
+
+# ConfigMap for staging
+configMap:
+  create: true
+  data:
+    staging_config.yaml: |
+      environment: staging
+      debug_mode: true
+      log_level: DEBUG
+
+# Secret for staging (should be mounted from external secret management)
+secret:
+  create: true
+  data:
+    # These should be base64 encoded secrets
+    redis_password: ""
+    api_key: ""
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 15s
+  scrapeTimeout: 5s
+  labels:
+    environment: staging
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Staging-specific annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/path: "/metrics"
+  prometheus.io/port: "8005"
+  environment: staging
+  team: data-science
+
+# Staging-specific labels
+labels:
+  environment: staging
+  team: data-science
+  component: refinery-agent
+
+# Autoscaling for staging
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
+
+# Staging-specific ingress (if needed)
+ingress:
+  enabled: false  # Usually not needed for staging
+  className: ""
+  annotations: {}
+  hosts:
+    - host: refinery-agent-staging.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Staging-specific service
+service:
+  type: ClusterIP
+  port: 8005
+  targetPort: 8005
+  annotations:
+    environment: staging
+
+# Staging-specific probes
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8005
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8005
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+# Staging-specific node selector (if needed)
+nodeSelector:
+  environment: staging
+
+# Staging-specific tolerations (if needed)
+tolerations: []
+
+# Staging-specific affinity
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - refinery-agent
+        topologyKey: kubernetes.io/hostname 
