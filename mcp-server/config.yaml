@@ -189,13 +189,13 @@ workflow_engine:
     eda_agent: 3
     ml_agent: 2
     analysis_agent: 4
-    feature_agent: 2
+    refinery_agent: 4
   agent_urls:
     eda_agent: "http://localhost:8001"
     ml_agent: "http://localhost:8002"
     analysis_agent: "http://localhost:8003"
-    feature_agent: "http://localhost:8004"
-  enabled_agents: ["eda_agent", "ml_agent", "analysis_agent", "feature_agent"]
+    refinery_agent: "http://localhost:8005"
+  enabled_agents: ["eda_agent", "ml_agent", "analysis_agent", "refinery_agent"]
   task_timeout_s: 600
   poll_interval_s: 0.2
   retry:
@@ -233,18 +233,54 @@ agent_actions:
     - transform
     - explore
     - preprocess
-  fe:
-    - create_visualization
-    - build_dashboard
-    - generate_report
-    - create_chart
-    - export_data
+  refinery:
+    # Data Quality Actions (Read-only)
+    - check_schema_consistency
+    - check_missing_values
+    - check_distributions
+    - check_duplicates
+    - check_leakage
+    - check_drift
+    - comprehensive_quality_report
+    # Basic Feature Engineering Actions (Refinery Agent)
+    - assign_feature_roles
+    - basic_impute_missing_values
+    - basic_scale_numeric_features
+    - basic_encode_categorical_features
+    - basic_generate_datetime_features
+    - basic_vectorise_text_features
+    - basic_generate_interactions
+    - basic_select_features
+    - save_fe_pipeline
+    - execute_feature_pipeline
+    # Advanced Feature Engineering Actions (FE Module)
+    - advanced_impute_missing_values
+    - advanced_encode_categorical_features
+    - advanced_feature_selection
+    - feature_interactions
+    - pipeline_persistence
   model:
-    - train
-    - predict
-    - evaluate
-    - tune
-    - deploy
+    # Step 7: Class Imbalance & Sampling
+    - analyze_class_imbalance
+    - apply_sampling_strategy
+    - quantify_imbalance
+    # Step 8: Training/Validation/Test Protocol
+    - train_model
+    - cross_validate
+    - evaluate_model
+    - hyperparameter_tune
+    - detect_overfitting
+    # Step 9: Baseline & Sanity Checks
+    - run_baseline_models
+    - detect_leakage
+    - association_analysis
+    - sanity_checks
+    # Step 10: Experiment Tracking
+    - log_experiment
+    - track_metrics
+    - save_artifacts
+    - register_model
+    - ensure_reproducibility
   custom:
     - execute
     - process

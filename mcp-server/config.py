@@ -155,15 +155,15 @@ class WorkflowEngineConfig(BaseModel):
         "eda_agent": 3,
         "ml_agent": 2,
         "analysis_agent": 4,
-        "feature_agent": 2
+        "refinery_agent": 4
     })
     agent_urls: Dict[str, str] = Field(default_factory=lambda: {
         "eda_agent": "http://localhost:8001",
         "ml_agent": "http://localhost:8002", 
         "analysis_agent": "http://localhost:8003",
-        "feature_agent": "http://localhost:8004"
+        "refinery_agent": "http://localhost:8005"
     })
-    enabled_agents: List[str] = Field(default_factory=lambda: ["eda_agent", "ml_agent", "analysis_agent", "feature_agent"])
+    enabled_agents: List[str] = Field(default_factory=lambda: ["eda_agent", "ml_agent", "analysis_agent", "refinery_agent"])
     task_timeout_s: int = Field(600, gt=0)  # 10 minutes
     poll_interval_s: float = Field(0.2, gt=0)
     retry: WorkflowEngineRetryConfig = Field(default_factory=lambda: WorkflowEngineRetryConfig())
@@ -185,8 +185,28 @@ class DslRepairConfig(BaseModel):
 
 class AgentActionsConfig(BaseModel):
     eda: List[str] = Field(default_factory=lambda: ["analyze", "clean", "transform", "explore", "preprocess"])
-    fe: List[str] = Field(default_factory=lambda: ["create_visualization", "build_dashboard", "generate_report", "create_chart", "export_data"])
-    model: List[str] = Field(default_factory=lambda: ["train", "predict", "evaluate", "tune", "deploy"])
+    refinery: List[str] = Field(default_factory=lambda: [
+        # Data Quality Actions (Read-only)
+        "check_schema_consistency", "check_missing_values", "check_distributions", 
+        "check_duplicates", "check_leakage", "check_drift", "comprehensive_quality_report",
+        # Basic Feature Engineering Actions (Refinery Agent)
+        "assign_feature_roles", "basic_impute_missing_values", "basic_scale_numeric_features",
+        "basic_encode_categorical_features", "basic_generate_datetime_features", "basic_vectorise_text_features",
+        "basic_generate_interactions", "basic_select_features", "save_fe_pipeline", "execute_feature_pipeline",
+        # Advanced Feature Engineering Actions (FE Module)
+        "advanced_impute_missing_values", "advanced_encode_categorical_features", "advanced_feature_selection",
+        "feature_interactions", "pipeline_persistence"
+    ])
+    model: List[str] = Field(default_factory=lambda: [
+        # Step 7: Class Imbalance & Sampling
+        "analyze_class_imbalance", "apply_sampling_strategy", "quantify_imbalance",
+        # Step 8: Training/Validation/Test Protocol
+        "train_model", "cross_validate", "evaluate_model", "hyperparameter_tune", "detect_overfitting",
+        # Step 9: Baseline & Sanity Checks
+        "run_baseline_models", "detect_leakage", "association_analysis", "sanity_checks",
+        # Step 10: Experiment Tracking
+        "log_experiment", "track_metrics", "save_artifacts", "register_model", "ensure_reproducibility"
+    ])
     custom: List[str] = Field(default_factory=lambda: ["execute", "process", "run_script", "call_api"])
 
 class AgentRoutingConfig(BaseModel):
