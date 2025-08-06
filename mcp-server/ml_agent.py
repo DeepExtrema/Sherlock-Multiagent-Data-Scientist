@@ -20,7 +20,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import redis.asyncio as redis
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST, multiprocess
 from fastapi.responses import Response
@@ -81,26 +81,73 @@ app = FastAPI(
 REQUEST_COUNT = Counter('ml_requests_total', 'Total requests', ['action', 'status'])
 REQUEST_DURATION = Histogram('ml_request_duration_seconds', 'Request duration', ['action'])
 ACTIVE_EXPERIMENTS = Gauge('ml_active_experiments', 'Number of active experiments')
-MODEL_TRAINING_TIME = Histogram('ml_model_training_seconds', 'Model training time', ['algorithm'])
+MODEL_TRAINING_TIME = Histogram('ml_model_training_time', 'Model training time', ['algorithm'])
 
-# Configuration from environment
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
-MLFLOW_TRACKING_URI = os.getenv('MLFLOW_TRACKING_URI', 'http://localhost:5000')
-EXPERIMENT_NAME = os.getenv('MLFLOW_EXPERIMENT_NAME', 'deepline-ml-workflow')
+# Import configuration and storage
+from config import get_config
+from storage import initialize_storage, get_storage
+
+# Get configuration
+config = get_config()
+REDIS_URL = config.REDIS_URL
+MLFLOW_TRACKING_URI = config.MLFLOW_TRACKING_URI
+EXPERIMENT_NAME = config.MLFLOW_EXPERIMENT_NAME
 
 # Initialize MLflow if available
 if MLFLOW_AVAILABLE:
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
     try:
+        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
         experiment = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
         if experiment is None:
             mlflow.create_experiment(EXPERIMENT_NAME)
         mlflow.set_experiment(EXPERIMENT_NAME)
+        logger.info("MLflow tracking enabled")
     except Exception as e:
-        logger.warning(f"Failed to initialize MLflow: {e}")
+        logger.warning(f"MLflow initialization failed, disabling tracking: {e}")
+        MLFLOW_AVAILABLE = False
 
-# In-memory experiment cache
+# In-memory experiment cache (will be replaced with persistent storage)
 _EXPERIMENTS: Dict[str, Dict[str, Any]] = {}
+
+# Lifecycle management
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup."""
+    logger.info(f"Starting {config.APP_NAME} v{config.APP_VERSION}")
+    
+    # Initialize storage
+    try:
+        await initialize_storage(
+            backend_type="auto",
+            redis_url=config.REDIS_URL,
+            db_path="ml_agent.db"
+        )
+        logger.info("Storage initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize storage: {e}")
+        raise
+    
+    # Initialize Prometheus metrics
+    logger.info("Initializing Prometheus metrics")
+    
+    # Log startup completion
+    logger.info("ML Agent startup complete")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown."""
+    logger.info(f"Shutting down {config.APP_NAME}")
+    
+    # Cleanup storage
+    try:
+        storage = await get_storage()
+        await storage.close()
+        logger.info("Storage cleanup complete")
+    except Exception as e:
+        logger.error(f"Storage cleanup failed: {e}")
+    
+    # Log shutdown completion
+    logger.info("ML Agent shutdown complete")
 
 # Step definitions
 class MLStep(Enum):
@@ -155,7 +202,8 @@ class ClassImbalanceRequest(BaseModel):
     test_size: float = 0.2
     cv_folds: int = 5
     
-    @validator('test_size')
+    @field_validator('test_size')
+    @classmethod
     def validate_test_size(cls, v):
         if not 0.1 <= v <= 0.5:
             raise ValueError('test_size must be between 0.1 and 0.5')
@@ -173,7 +221,8 @@ class TrainingRequest(BaseModel):
     early_stopping: bool = True
     max_iterations: int = 1000
     
-    @validator('cv_folds')
+    @field_validator('cv_folds')
+    @classmethod
     def validate_cv_folds(cls, v):
         if not 2 <= v <= 10:
             raise ValueError('cv_folds must be between 2 and 10')
@@ -228,19 +277,26 @@ def load_data(file_path: str) -> pd.DataFrame:
     else:
         raise ValueError(f"Unsupported file format: {path.suffix}")
 
-def get_experiment_context(experiment_id: str) -> Dict[str, Any]:
-    """Get or create experiment context."""
-    if experiment_id not in _EXPERIMENTS:
-        _EXPERIMENTS[experiment_id] = {
+async def get_experiment_context(experiment_id: str) -> Dict[str, Any]:
+    """Get or create experiment context from persistent storage."""
+    storage = await get_storage()
+    experiment = await storage.get_experiment(experiment_id)
+    
+    if experiment is None:
+        experiment = {
+            "id": experiment_id,
             "created_at": time.time(),
             "steps": [],
             "data_splits": {},
             "models": {},
             "metrics": {},
-            "artifacts": {}
+            "artifacts": {},
+            "status": "created"
         }
+        await storage.store_experiment(experiment_id, experiment)
         ACTIVE_EXPERIMENTS.inc()
-    return _EXPERIMENTS[experiment_id]
+    
+    return experiment
 
 def calculate_class_imbalance_metrics(y: pd.Series) -> Dict[str, Any]:
     """Calculate comprehensive class imbalance metrics."""
@@ -998,12 +1054,21 @@ async def experiment_tracking_endpoint(req: ExperimentTrackingRequest):
 # Health and monitoring endpoints
 @app.get("/health")
 async def health():
+    """Health check endpoint."""
+    try:
+        storage = await get_storage()
+        storage_healthy = True
+    except Exception:
+        storage_healthy = False
+    
     return {
         "status": "ok",
-        "version": "1.0.0",
+        "version": config.APP_VERSION,
+        "app_name": config.APP_NAME,
         "mlflow_available": MLFLOW_AVAILABLE,
         "imbalanced_available": IMBALANCED_AVAILABLE,
-        "active_experiments": len(_EXPERIMENTS)
+        "storage_healthy": storage_healthy,
+        "timestamp": time.time()
     }
 
 @app.get("/metrics")
@@ -1011,16 +1076,52 @@ async def metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 @app.get("/experiments")
-async def list_experiments():
-    return {
-        "active_experiments": len(_EXPERIMENTS),
-        "experiments": list(_EXPERIMENTS.keys()),
-        "experiment_summaries": {
-            exp_id: exp.get("experiment_summary", {})
-            for exp_id, exp in _EXPERIMENTS.items()
+async def list_experiments(
+    status: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    page: int = 1,
+    size: int = 50
+):
+    """List experiments with optional filtering and pagination."""
+    try:
+        storage = await get_storage()
+        
+        # Build filters
+        filters = {}
+        if status:
+            filters['status'] = status
+        if from_date:
+            filters['from_date'] = from_date
+        if to_date:
+            filters['to_date'] = to_date
+        
+        experiments = await storage.list_experiments(filters)
+        
+        # Apply pagination
+        total = len(experiments)
+        start_idx = (page - 1) * size
+        end_idx = start_idx + size
+        paginated_experiments = experiments[start_idx:end_idx]
+        
+        return {
+            "experiments": paginated_experiments,
+            "pagination": {
+                "page": page,
+                "size": size,
+                "total": total,
+                "pages": (total + size - 1) // size
+            }
         }
-    }
+    except Exception as e:
+        logger.error(f"Failed to list experiments: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to list experiments: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002) 
+    uvicorn.run(
+        app, 
+        host=config.HOST, 
+        port=config.PORT,
+        log_level=config.LOG_LEVEL.lower()
+    ) 
