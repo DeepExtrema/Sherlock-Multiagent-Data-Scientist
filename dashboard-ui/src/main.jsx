@@ -37,12 +37,14 @@ function StatusPill({ label, ok }) {
 function TopBar({ orchestrator, eda, refinery, ml }) {
   return (
     <div className="topbar">
-      <div className="brand">DEEPLINE</div>
-      <div className="status">
-        <StatusPill label="Orchestrator" ok={!!orchestrator?.healthy} />
-        <StatusPill label="EDA" ok={!!eda?.healthy} />
-        <StatusPill label="Refinery" ok={!!refinery?.healthy} />
-        <StatusPill label="ML" ok={!!ml?.healthy} />
+      <div className="topbar-inner">
+        <div className="brand">DEEPLINE</div>
+        <div className="status">
+          <StatusPill label="Orchestrator" ok={!!orchestrator?.healthy} />
+          <StatusPill label="EDA" ok={!!eda?.healthy} />
+          <StatusPill label="Refinery" ok={!!refinery?.healthy} />
+          <StatusPill label="ML" ok={!!ml?.healthy} />
+        </div>
       </div>
     </div>
   )
@@ -253,14 +255,16 @@ function App() {
   return (
     <div className="app">
       <TopBar orchestrator={orcHealth} eda={edaHealth} refinery={refineryHealth} ml={mlHealth} />
-      <div className="grid main simple">
-        <div className="col">
-          <ConsolePanel onSubmitPrompt={handleSubmitPrompt} lastResult={lastResult} busy={busy} />
-          <WorkflowsPanel runs={runs} startBasicInfo={handleStartBasicInfo} />
-        </div>
-        <div className="col">
-          <ProcessesPanel orchestrator={orcHealth} eda={edaHealth} refinery={refineryHealth} />
-          <DatasetsPanel datasets={datasets} onUpload={handleUpload} />
+      <div className="container">
+        <div className="grid main simple">
+          <div className="col">
+            <ConsolePanel onSubmitPrompt={handleSubmitPrompt} lastResult={lastResult} busy={busy} />
+            <WorkflowsPanel runs={runs} startBasicInfo={handleStartBasicInfo} />
+          </div>
+          <div className="col">
+            <ProcessesPanel orchestrator={orcHealth} eda={edaHealth} refinery={refineryHealth} />
+            <DatasetsPanel datasets={datasets} onUpload={handleUpload} />
+          </div>
         </div>
       </div>
     </div>
