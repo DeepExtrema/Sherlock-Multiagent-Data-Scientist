@@ -227,6 +227,8 @@ The response will include a `run_id` that can be used to poll status via `GET /r
 ### **Use the Hybrid API**
 To translate natural language into DSL asynchronously:
 
+X marks the spot
+
 ```bash
 # Submit translation request
 curl -X POST "http://localhost:8000/workflows/translate" \
