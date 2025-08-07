@@ -37,6 +37,7 @@ except ImportError:
     FE_MODULE_AVAILABLE = False
     logging.warning("FE module not available - advanced features disabled")
 
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -204,11 +205,13 @@ class TaskRequest(BaseModel):
             return ACTION_BACKEND_MAP.get(values['action'], BackendType.REFINERY_BASIC)
         return v
 
+
 class TaskResponse(BaseModel):
     task_id: str
     success: bool
     mode: AgentMode
     backend: BackendType
+
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
     execution_time: float
@@ -826,6 +829,7 @@ async def feature_interactions(params: Dict[str, Any]) -> Dict[str, Any]:
 # Main execution endpoint
 @app.post("/execute", response_model=TaskResponse)
 async def execute(req: TaskRequest):
+
     start_time = time.time()
     
     try:
@@ -846,6 +850,7 @@ async def execute(req: TaskRequest):
             "check_duplicates": check_duplicates,
             "check_leakage": check_leakage,
             "check_drift": check_drift,
+
             "comprehensive_quality_report": comprehensive_quality_report,
             
             # Basic Feature Engineering actions (Refinery Agent)
@@ -874,12 +879,14 @@ async def execute(req: TaskRequest):
         # Record metrics with backend
         REQUEST_COUNT.labels(action=req.action, mode=req.mode.value, backend=req.backend.value, status="success").inc()
         REQUEST_DURATION.labels(action=req.action, mode=req.mode.value, backend=req.backend.value).observe(execution_time)
+
         
         return TaskResponse(
             task_id=req.task_id,
             success=True,
             mode=req.mode,
             backend=req.backend,
+
             result=result,
             execution_time=execution_time,
             timestamp=time.time()
@@ -892,6 +899,7 @@ async def execute(req: TaskRequest):
         REQUEST_COUNT.labels(action=req.action, mode=req.mode.value, backend=req.backend.value, status="error").inc()
         REQUEST_DURATION.labels(action=req.action, mode=req.mode.value, backend=req.backend.value).observe(execution_time)
         
+
         logger.error(f"Task {req.task_id} failed: {str(e)}")
         
         return TaskResponse(
@@ -899,6 +907,7 @@ async def execute(req: TaskRequest):
             success=False,
             mode=req.mode,
             backend=req.backend,
+
             error=str(e),
             execution_time=execution_time,
             timestamp=time.time()

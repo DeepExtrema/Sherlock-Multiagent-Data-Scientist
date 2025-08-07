@@ -27,6 +27,7 @@ def get_agent_matrix() -> Dict[str, List[str]]:
         config = get_config()
         _agent_matrix = {
             "eda": config.master_orchestrator.agent_actions.eda,
+ cursor/prepare-refinery-agent-for-rollout-8ae2
             "refinery": config.master_orchestrator.agent_actions.refinery,
             "model": config.master_orchestrator.agent_actions.model,
             "custom": config.master_orchestrator.agent_actions.custom
