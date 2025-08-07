@@ -27,6 +27,7 @@ def get_agent_matrix() -> Dict[str, List[str]]:
         config = get_config()
         _agent_matrix = {
             "eda": config.master_orchestrator.agent_actions.eda,
+            "refinery_agent": config.master_orchestrator.agent_actions.refinery_agent,
             "fe": config.master_orchestrator.agent_actions.fe,
             "model": config.master_orchestrator.agent_actions.model,
             "custom": config.master_orchestrator.agent_actions.custom
