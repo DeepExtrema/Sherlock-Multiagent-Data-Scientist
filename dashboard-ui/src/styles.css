@@ -13,6 +13,8 @@ body{margin:0;background:radial-gradient(1200px 600px at -10% -10%, #10203022, t
 .pill.ok .dot{background:var(--ok)}
 .pill.bad .dot{background:var(--bad)}
 .grid.main{display:grid;gap:14px;padding:16px;grid-template-columns:1.4fr 1fr}
+.grid.main.simple{grid-template-columns:1fr 1fr}
+.col{display:grid;gap:14px}
 .panel{border:1px solid #122; border-radius:10px; overflow:hidden; background:linear-gradient(180deg,#0c131a,#0b1117)}
 .panel-header{padding:10px 12px;border-bottom:1px solid #132;background:linear-gradient(90deg,#0b1117,#0e1822);font-weight:600;letter-spacing:.08em}
 .console{display:grid;gap:8px;padding:12px}
