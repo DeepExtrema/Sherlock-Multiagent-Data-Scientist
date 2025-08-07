@@ -5,82 +5,75 @@
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)](https://github.com/your-org/deepline)
 [![Version](https://img.shields.io/badge/Version-2.1.0-orange.svg)](https://github.com/your-org/deepline/releases)
 
-**Deepline** is a comprehensive AI-powered MLOps platform that combines natural language processing, intelligent workflow orchestration, and robust monitoring systems. The platform features a **Hybrid API** for async translation workflows, **Deadlock Monitor** for production reliability, and a complete **Workflow Engine** with graceful cancellation capabilities.
+**Deepline** is a comprehensive AI-powered MLOps platform that automates machine learning workflows through intelligent agent orchestration. The platform combines natural language processing, specialized AI agents, and real-time monitoring to streamline the entire ML lifecycle from data analysis to model deployment.
 
 ## 🎯 **Overview**
 
-Deepline transforms how organizations approach machine learning operations by providing:
+Deepline revolutionizes machine learning operations by providing:
 
-- **🤖 AI-Powered Workflow Generation** - Convert natural language requests into executable ML workflows
-- **🔄 Intelligent Agent Orchestration** - Coordinate multiple specialized AI agents for data analysis, feature engineering, and model training
-- **🛡️ Production-Grade Reliability** - Deadlock monitoring, graceful cancellation, and comprehensive error handling
-- **📊 Real-Time Observability** - Live monitoring dashboard with metrics, alerts, and performance tracking
+- **🤖 Natural Language Interface** - Convert plain English requests into executable ML workflows
+- **🔄 Intelligent Agent Orchestration** - Coordinate specialized AI agents for data analysis, feature engineering, and model training
+- **🛡️ Production Reliability** - Deadlock monitoring, graceful cancellation, and comprehensive error handling
+- **📊 Real-Time Observability** - Interactive dashboard for monitoring workflows, metrics, and system health
 - **🔒 Enterprise Security** - Rate limiting, authentication, and secure data handling
 
 ### **🚀 Key Features**
 
-- **🔄 Hybrid API System** - Async translation with token-based polling
-- **🛡️ Deadlock Monitor** - Automatic detection and recovery from stuck workflows
-- **⚡ Graceful Cancellation** - Multi-endpoint API for workflow management
+- **🔄 Natural Language Processing** - Convert user requests to structured workflows
+- **🛡️ Deadlock Detection** - Automatic identification and recovery from stuck workflows
+- **⚡ Workflow Management** - Start, monitor, and cancel workflows through API
 - **🧠 Intelligent Scheduling** - Priority-based task execution with retry logic
-- **📊 Real-time Monitoring** - SLA tracking and performance metrics
-- **🔒 Security & Rate Limiting** - Production-grade protection
-- **🔄 Translation Queue** - Background processing with LLM integration
-- **📈 ML Workflow Automation** - Complete ML pipeline from data analysis to model deployment
+- **📊 Real-time Dashboard** - Live monitoring with metrics and performance tracking
+- **🔒 Security & Rate Limiting** - Production-grade protection and access control
+- **🤖 Specialized AI Agents** - EDA, ML, Refinery, and custom agents for different tasks
+- **📈 Complete ML Pipeline** - End-to-end automation from data analysis to model deployment
 
 ## 🏗️ **Architecture & Core Components**
 
-Deepline follows a microservices architecture with specialized AI agents and a central orchestrator:
+Deepline follows a microservices architecture with a central orchestrator coordinating specialized AI agents:
 
 ```
-                                ┌───────────────────────────────────┐
-                                │              Clients             │
-                                │  • React Dashboard  • CLI  • SDK │
-                                └───────────────┬──────────────────┘
-                                                │  REST / WebSocket
-╔═══════════════════════════════════════════════▼════════════════════════════════════════╗
-║                            API Layer  (FastAPI app)                                    ║
-║────────────────────────────────────────────────────────────────────────────────────────║
-║  /workflows/dsl        ──▶  DSL Parser + Guardrails Repair Loop (strict path)          ║
-║  /workflows/translate  ──▶  Translation Queue  ──┐                                     ║
-║  /translation/{token}  ◀─┐                       │  ◀── Translation Worker (LLM+validate)║
-║  /workflows/suggest    ──┘                       │                                     ║
-║  /runs/{id}/cancel  • /rollback  • /status       │                                     ║
-╚════════════╤═════════════════════════════════════┴═════════════════════════════════════╝
-             │validated DSL / "needs_human"
-             ▼
-╔════════════════════════════════════════════════════════════════════════════════════════╗
-║                    Master Orchestrator Service                                         ║
-║────────────────────────────────────────────────────────────────────────────────────────║
-║  1. Security / Rate-limit / Input Sanitizer                                            ║
-║  2. DecisionEngine (cost, drift, GPU knapsack, policy overrides)                       ║
-║  3. WorkflowManager                                                                    ║
-║       • persist run+tasks in Mongo                                                     ║
-║       • seed root tasks to Scheduler                                                   ║
-║       • handle Kafka task.events  (SUCCESS/FAILED/STARTED/CANCELLED/DRIFT)             ║
-║  4. DeadlockMonitor  (RUNNING + no progress → CANCEL)                                  ║
-║  5. SLAMonitor (task & run timeouts)                                                   ║
-║  6. Telemetry  (OpenTelemetry + Prometheus metrics)                                    ║
-╚════════════╤═══════════════════════════════════════════════════════════════════════════╝
-             │task_meta dicts
-             ▼
-╔════════════════════════════════════════════════════════════════════════════════════════╗
-║                Workflow Engine Runtime (workflow_engine/*)                             ║
-║────────────────────────────────────────────────────────────────────────────────────────║
-║  PriorityScheduler   ──► in-mem heap (α/ERT + β·prio + γ·urgency)                      ║
-║  RetryTracker (Redis Z-set) ─┬─> Scheduler.enqueue when delay expires                  ║
-║  WorkerPool per agent (EDA / FE / MODEL / CUSTOM)                                      ║
-║     • fetches from Scheduler, checks Redis "cancelled_runs" set                        ║
-║     • POST /execute to agent container                                                 ║
-║     • emits TASK_STARTED / SUCCESS / FAILED / CANCELLED to Kafka                      ║
-║  StateStore (Redis)  – runtime stats, ERT, translation tokens                          ║
-╚════════════╤═══════════════════════════════════════════════════════════════════════════╝
-             │ Kafka: task.requests / task.events / drift.events
-             ▼
-  ┌───────────────┐               ┌──────────────────┐               ┌────────────────┐
-  │   Agent Pods  │               │  Observability   │               │ Drift Detectors│
-  │ (EDA / FE …)  │               │  (FastAPI+UI)    │               │  (Evidently)   │
-  └───────────────┘               └──────────────────┘               └────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                              User Interface Layer                                      │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│  • React Dashboard (Real-time monitoring & control)                                    │
+│  • REST API (Workflow management & status)                                             │
+│  • CLI Tools (Command-line interface)                                                  │
+│  • SDK (Python client library)                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                                        │
+                                        ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                           Master Orchestrator Service                                   │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│  • Natural Language Processing (Convert requests to workflows)                         │
+│  • Workflow Management (Start, monitor, cancel workflows)                              │
+│  • Task Scheduling (Priority-based execution)                                          │
+│  • Deadlock Monitor (Detect and recover stuck workflows)                               │
+│  • Security & Rate Limiting (Access control and protection)                            │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                                        │
+                                        ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                              Specialized AI Agents                                     │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│  📊 EDA Agent          │  🤖 ML Agent           │  🔧 Refinery Agent    │  🎯 Custom Agents │
+│  • Data Analysis       │  • Model Training      │  • Feature Engineering│  • Domain-specific │
+│  • Visualizations      │  • Hyperparameter Tune │  • Data Quality       │  • Custom Logic    │
+│  • Schema Inference    │  • Experiment Tracking │  • Drift Detection    │  • Integration     │
+│  • Outlier Detection   │  • Model Evaluation    │  • Pipeline Validation│  • Extensions      │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                                        │
+                                        ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                           Observability & Control                                      │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│  • Interactive Dashboard (Real-time workflow monitoring)                               │
+│  • Metrics Collection (Prometheus integration)                                         │
+│  • Event Streaming (Kafka-based real-time events)                                      │
+│  • Health Monitoring (System status and alerts)                                        │
+│  • Workflow Control (Start, pause, cancel operations)                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### **🤖 AI Agents**
