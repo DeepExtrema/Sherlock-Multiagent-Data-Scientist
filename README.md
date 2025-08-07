@@ -300,7 +300,7 @@ Common issues and fixes are documented in the various guides:
 - **Missing data or charts not rendering**: verify MongoDB connectivity and that Kafka topics contain events
 - **Port conflicts**: change the port arguments when launching uvicorn or set the PORT environment variable for React
 
-For further assistance, please open an issue on the GitHub repository or start a discussion. License questions should be directed to **licensing@deepline.ai**.
+For further assistance, please open an issue on the GitHub repository or start a discussion. License questions should be directed to **deeplineanalytics@gmail.com**.
 
 ## 📌 **Roadmap**
 
