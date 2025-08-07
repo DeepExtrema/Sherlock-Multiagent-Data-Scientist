@@ -50,7 +50,12 @@ app.add_middleware(
 )
 
 # MongoDB connection
-db = AsyncIOMotorClient("mongodb://localhost:27017").deepline
+try:
+    db = AsyncIOMotorClient("mongodb://localhost:27017").deepline
+    logger.info("MongoDB connection established")
+except Exception as e:
+    logger.warning(f"MongoDB connection failed: {e}. Running in fallback mode.")
+    db = None
 
 # Store active WebSocket connections
 active_connections: List[WebSocket] = []
@@ -170,6 +175,13 @@ async def root():
 async def create_run(workflow_data: dict):
     """Create a new workflow run with concurrency checks"""
     try:
+        # Check if database is available
+        if db is None:
+            raise HTTPException(
+                status_code=503, 
+                detail="Database not available. Please ensure MongoDB is running."
+            )
+        
         # Check if we can start a new workflow
         if not await orchestrator_state.can_start_workflow():
             raise HTTPException(
@@ -219,6 +231,8 @@ async def create_run(workflow_data: dict):
 @app.put("/runs/{run_id}/complete")
 async def complete_run(run_id: str):
     """Mark a workflow run as completed"""
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
     try:
         # Update database
         await db.runs.update_one(
@@ -345,6 +359,8 @@ async def get_run(run_id: str):
 @app.get("/runs")
 async def get_runs(limit: int = 10):
     """Get recent runs"""
+    if db is None:
+        return {"runs": [], "message": "Database not available"}
     try:
         runs = await db.runs.find().sort([("_id", -1)]).limit(limit).to_list(limit)
         return {"runs": serialize_doc(runs)}
@@ -355,6 +371,8 @@ async def get_runs(limit: int = 10):
 @app.get("/tasks/{task_id}")
 async def get_task(task_id: str):
     """Get a specific task"""
+    if db is None:
+        return {"task": None, "message": "Database not available"}
     try:
         task = await db.tasks.find_one({"task_id": task_id})
         return {"task": serialize_doc(task)}
