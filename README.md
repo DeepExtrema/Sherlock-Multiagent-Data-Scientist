@@ -1,480 +1,314 @@
-# Deepline - AI-Powered MLOps Platform
+# Deepline – The End‑to‑End MLOps Powerhouse
 
-[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0%20%7C%20BUSL%201.1-green.svg)](LICENSE.md)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)](https://github.com/your-org/deepline)
-[![Version](https://img.shields.io/badge/Version-2.1.0-orange.svg)](https://github.com/your-org/deepline/releases)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)](https://github.com/DeepExtrema/Deepline)
+[![Version](https://img.shields.io/badge/Version-2.1.0-orange.svg)](https://github.com/DeepExtrema/Deepline/releases)
 
-**Deepline** is a comprehensive AI-powered MLOps platform that automates machine learning workflows through intelligent agent orchestration. The platform combines natural language processing, specialized AI agents, and real-time monitoring to streamline the entire ML lifecycle from data analysis to model deployment.
+**Version**: 2.1.0  
+**Status**: Production ready with deadlock monitoring and graceful cancellation support  
+**Last updated**: January 2024 (see [CHANGELOG.md](CHANGELOG.md) for release notes).
 
-## 🎯 **Overview**
+Imagine turning raw data into insights and models in minutes—no code required. Deepline isn't just an orchestration tool; it's your complete data science studio. Start with drag‑and‑drop EDA, where the EDA Agent handles data loading, statistics, missing‑data analysis, outlier detection and stunning, publication‑ready visualisations. Move seamlessly into feature engineering, with configurable pipelines that transform, encode and select the best features—all through an intuitive interface. Finally, fire up model training via built‑in, no‑code workflows that leverage the MLOps engine to train and evaluate models on the fly.
 
-Deepline revolutionizes machine learning operations by providing:
+At its core, Deepline harnesses a Master Orchestrator that orchestrates every task—dispatching them to specialist agents and tracking progress. A Hybrid API lets you describe workflows in plain language and watch them transform into executable pipelines, while deadlock monitors and graceful cancellation keep long-running jobs resilient and safe. Your work is visualised in real time through the observability dashboard, delivering live charts and event streams.
 
-- **🤖 Natural Language Interface** - Convert plain English requests into executable ML workflows
-- **🔄 Intelligent Agent Orchestration** - Coordinate specialized AI agents for data analysis, feature engineering, and model training
-- **🛡️ Production Reliability** - Deadlock monitoring, graceful cancellation, and comprehensive error handling
-- **📊 Real-Time Observability** - Interactive dashboard for monitoring workflows, metrics, and system health
-- **🔒 Enterprise Security** - Rate limiting, authentication, and secure data handling
+Whether you're a data enthusiast or a seasoned data scientist, Deepline makes the entire journey—from EDA to feature engineering to model training—feel like magic.
 
-### **🚀 Key Features**
+## 🏗️ **Architecture Overview**
 
-- **🔄 Natural Language Processing** - Convert user requests to structured workflows
-- **🛡️ Deadlock Detection** - Automatic identification and recovery from stuck workflows
-- **⚡ Workflow Management** - Start, monitor, and cancel workflows through API
-- **🧠 Intelligent Scheduling** - Priority-based task execution with retry logic
-- **📊 Real-time Dashboard** - Live monitoring with metrics and performance tracking
-- **🔒 Security & Rate Limiting** - Production-grade protection and access control
-- **🤖 Specialized AI Agents** - EDA, ML, Refinery, and custom agents for different tasks
-- **📈 Complete ML Pipeline** - End-to-end automation from data analysis to model deployment
+The system follows a modular microservices design with these core components:
 
-## 🏗️ **Architecture & Core Components**
+- **Master Orchestrator** – a FastAPI service that manages workflow definitions, dispatches tasks to specialist agents and tracks their execution. It exposes a REST API for dataset uploads, workflow creation and artifact retrieval.
 
-Deepline follows a microservices architecture with a central orchestrator coordinating specialized AI agents:
+- **EDA Agent** – a microservice providing advanced data loading, statistical summaries, missing‑data analysis, outlier detection and publication‑ready visualisation. It is built on FastAPI and integrates with Pandas, NumPy, scikit‑learn and Redis for caching.
+
+- **Hybrid API** – an asynchronous translation service that converts natural‑language requests into a domain‑specific language (DSL) for workflow execution. It enables non‑blocking translation, token‑based polling, Redis‑backed queuing and comprehensive validation of user input.
+
+- **Deadlock Monitor & Graceful Cancellation** – a background service that scans for stuck workflows, cancels them safely and provides API endpoints for manual cancellation.
+
+- **Observability Dashboard** – a React/Node.js application providing real‑time charts, recent run status and live event streaming. The dashboard connects to the FastAPI backend via REST and WebSockets and depends on Kafka and MongoDB.
+
+Together, these components form a scalable microservices architecture capable of orchestrating complex data‑science workflows while providing real‑time monitoring and robust error handling.
+
+### **🧱 System Architecture**
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                              User Interface Layer                                      │
-├─────────────────────────────────────────────────────────────────────────────────────────┤
-│  • React Dashboard (Real-time monitoring & control)                                    │
-│  • REST API (Workflow management & status)                                             │
-│  • CLI Tools (Command-line interface)                                                  │
-│  • SDK (Python client library)                                                         │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                           Master Orchestrator Service                                   │
-├─────────────────────────────────────────────────────────────────────────────────────────┤
-│  • Natural Language Processing (Convert requests to workflows)                         │
-│  • Workflow Management (Start, monitor, cancel workflows)                              │
-│  • Task Scheduling (Priority-based execution)                                          │
-│  • Deadlock Monitor (Detect and recover stuck workflows)                               │
-│  • Security & Rate Limiting (Access control and protection)                            │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                              Specialized AI Agents                                     │
-├─────────────────────────────────────────────────────────────────────────────────────────┤
-│  📊 EDA Agent          │  🤖 ML Agent           │  🔧 Refinery Agent    │  🎯 Custom Agents │
-│  • Data Analysis       │  • Model Training      │  • Feature Engineering│  • Domain-specific │
-│  • Visualizations      │  • Hyperparameter Tune │  • Data Quality       │  • Custom Logic    │
-│  • Schema Inference    │  • Experiment Tracking │  • Drift Detection    │  • Integration     │
-│  • Outlier Detection   │  • Model Evaluation    │  • Pipeline Validation│  • Extensions      │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                           Observability & Control                                      │
-├─────────────────────────────────────────────────────────────────────────────────────────┤
-│  • Interactive Dashboard (Real-time workflow monitoring)                               │
-│  • Metrics Collection (Prometheus integration)                                         │
-│  • Event Streaming (Kafka-based real-time events)                                      │
-│  • Health Monitoring (System status and alerts)                                        │
-│  • Workflow Control (Start, pause, cancel operations)                                  │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────┐    ┌───────────────────────────────┐
+│            Clients            │    │        Observability UI        │
+│  (CLI, SDKs, React dashboard) │    │    (React + Recharts)          │
+└───────────────┬───────────────┘    └───────────────┬───────────────┘
+                │ REST / WebSocket                    │
+╔════════════════▼════════════════════╗               │
+║      API Layer – FastAPI app        ║               │
+║  • /workflows/dsl   – DSL executor  ║               │
+║  • /workflows/translate – async NL  ║               │
+║  • /translation/{token} – polling   ║               │
+║  • /runs/{id}/cancel – cancellation ║               │
+╚═══════════════╤═════════════════════╝               │
+                │ validated DSL                      │
+                ▼                                    │
+╔══════════════════════════════════════════════════════╗
+║         Master Orchestrator Service (FastAPI)         ║
+║  • Workflow management, scheduling & tracking          ║
+║  • Interfaces with agents via REST                    ║
+║  • Persists runs & tasks in MongoDB                   ║
+║  • Publishes events to Kafka                          ║
+║  • Integrates deadlock monitor & SLA monitor          ║
+╚═══════════════╤═══════════════════════════════════════╝
+                │ task requests / events (Kafka)        
+                ▼
+        ┌────────────────────────┬────────────────────────┬───────────────┐
+        │ EDA Agent (FastAPI)    │   Future agents (FE,   │ Drift Detectors│
+        │ • Data loading         │     ML, Model serving) │  (Evidently)   │
+        │ • Statistical analysis │                        │               │
+        │ • Visualisation        │                        │               │
+        │ • Outlier detection    │                        │               │
+        └────────────────────────┴────────────────────────┴───────────────┘
 ```
 
-### **🤖 AI Agents**
+Additional infrastructure includes MongoDB (for run persistence), Redis (for caching and concurrency control) and Kafka (for inter‑service messaging). The dashboard communicates with the backend via REST and WebSocket endpoints.
 
-- **📊 EDA Agent** - Exploratory Data Analysis with automated insights, visualizations, and data quality assessment
-- **🔧 Feature Engineering Agent** - Automated feature creation, selection, and transformation pipelines
-- **🤖 ML Agent** - Complete ML workflow including class imbalance handling, model training, and experiment tracking
-- **🔍 Refinery Agent** - Data quality monitoring, drift detection, and pipeline validation
-- **🎯 Custom Agents** - Extensible framework for domain-specific AI agents
+## ✨ **Key Features**
 
-### **🧠 Core Orchestration Components**
+- **Hybrid API with async translation** – submit natural language descriptions of workflows and retrieve a token for asynchronous translation. Poll for results via the `/translation/{token}` endpoint and execute DSL workflows through `/workflows/dsl`.
 
-- **Master Orchestrator** - Central workflow coordination and decision engine
-- **Workflow Engine** - Priority-based task scheduling and execution
-- **Translation Queue** - Async natural language to DSL conversion
-- **Deadlock Monitor** - Automatic detection and recovery from stuck workflows
-- **SLA Monitor** - Performance tracking and timeout management
+- **Intelligent scheduling** – the Master Orchestrator prioritises tasks based on urgency and resource availability and supports retries and concurrency limits.
 
-## 🔧 **Key Capabilities**
+- **Exploratory Data Analysis** – the EDA Agent provides detailed dataset summaries, correlation matrices, missing‑data visualisation and outlier detection using IQR, Isolation Forest and Local Outlier Factor methods. It generates high‑quality visualisations (300 DPI PNG) ready for publications.
 
-### **🔄 Natural Language to Workflow Translation**
-Convert natural language requests into executable ML workflows:
+- **Deadlock monitoring and graceful cancellation** – automatic detection of stuck workflows with configurable thresholds (default: 15 minutes per task, 1 hour per workflow) and APIs to cancel or force‑cancel runs.
+
+- **Real‑time observability** – live event streams, recent runs view and performance charts through the dashboard.
+
+- **Containerized deployment** – Dockerfile and docker‑compose.yml enable multi‑service deployments with Nginx load balancing and automatic health checks.
+
+- **Security & monitoring** – input sanitization, CORS, rate limiting, API key support and comprehensive health endpoints.
+
+## 🛠️ **Tech Stack & Dependencies**
+
+Deepline relies on modern Python and JavaScript ecosystems. Below are the primary dependencies and their minimum versions (for a complete lockfile with hashes see `mcp‑server/requirements.lock`).
+
+| Category | Key packages (min version) |
+|----------|---------------------------|
+| **Core framework** | `mcp[cli] ≥ 1.10.1`, `pydantic ≥ 2.11.7` |
+| **Data processing & analysis** | `pandas ≥ 2.2.0`, `numpy ≥ 2.1.0`, `pyarrow ≥ 20.0.0` |
+| **Machine learning** | `scikit‑learn ≥ 1.7.0`, `scipy ≥ 1.15.0`, `pyod ≥ 2.0.5` |
+| **Data quality & profiling** | `evidently ≥ 0.7.9`, `pandas‑profiling ≥ 3.2.0`, `missingno ≥ 0.5.2` |
+| **Visualisation** | `matplotlib ≥ 3.10.0`, `seaborn ≥ 0.13.0`, `plotly ≥ 5.24.0` |
+| **Server & API** | `fastapi ≥ 0.104.0`, `uvicorn[standard] ≥ 0.24.0`, `httpx ≥ 0.25.0` |
+| **Messaging & database** | `confluent‑kafka ≥ 2.3.0`, `motor ≥ 3.3.0`, `pymongo ≥ 4.6.0` |
+| **Caching & storage** | `redis ≥ 5.0.0`, `aioredis ≥ 2.0.0` |
+| **Configuration & utilities** | `pyyaml ≥ 6.0.1`, `python‑multipart ≥ 0.0.6` |
+| **Resilience & rate limiting** | `tenacity ≥ 8.2.0`, `slowapi ≥ 0.1.9` |
+| **Security & validation** | `bleach ≥ 6.1.0`, `validators ≥ 0.22.0` |
+| **LLM & guardrails (optional)** | `guardrails‑ai ≥ 0.5.0`, `openai ≥ 1.0.0` |
+| **Front‑end** | Node.js 18+, React 18, Recharts for charts |
+
+### **Prerequisites:**
+
+- **Python 3.13+** (3.12+ is supported on Windows)
+- **Node.js 18+** for the React dashboard
+- **Docker & Docker Compose** to run MongoDB, Kafka, Redis and the containerised services
+- **Git** for version control
+
+## 🧑‍💻 **Installation & Setup**
+
+Follow these steps to get Deepline running on your machine. Detailed Windows‑specific instructions are available in [docs/INSTALLATION.md](docs/INSTALLATION.md).
+
+### **1. Clone the repository**
+```bash
+git clone https://github.com/DeepExtrema/Deepline.git
+cd Deepline
+```
+
+### **2. Start infrastructure services**
+Deepline relies on MongoDB, Redis and Kafka. The repository provides a `docker‑compose.yml` in `mcp‑server/` to spin these up quickly.
+
+```bash
+cd mcp-server
+docker-compose up -d
+```
+
+This will launch the databases and message queue needed by the orchestrator and EDA agent. You can monitor the containers via `docker-compose ps`.
+
+### **3. Set up a Python environment**
+Create a virtual environment and install the Python dependencies. Use Python 3.13+ to ensure compatibility. For example:
+
+```bash
+# create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# install backend dependencies
+pip install -r requirements-python313.txt
+```
+
+The `requirements-python313.txt` file specifies compatible versions across the data science, machine learning and web frameworks.
+
+### **4. Install Node.js dependencies (dashboard)**
+If you wish to run the real‑time dashboard, install the front‑end dependencies and start the development server:
+
+```bash
+cd dashboard/dashboard-frontend
+npm install
+npm start
+```
+
+This will run the React app on port 3000 by default.
+
+### **5. Run the backend services**
+In separate terminals (or using process manager scripts), launch the Master Orchestrator and EDA Agent:
+
+```bash
+# Master Orchestrator (port 8000)
+python start_master_orchestrator.py
+
+# EDA Agent (port 8001)
+python start_eda_service.py
+```
+
+The services will be available at:
+
+- **Master Orchestrator**: http://localhost:8000 – API root & health check
+- **EDA Agent**: http://localhost:8001 – EDA API and docs
+- **Dashboard UI**: http://localhost:3000 – front‑end interface
+
+Alternatively you can use Docker Compose to build and run all services together:
+
+```bash
+docker-compose up -d
+```
+
+This will build the containers, expose ports 80/443 via Nginx and run health checks.
+
+### **6. Configuration**
+Deepline reads configuration from `mcp-server/config.yaml`, environment variables and command‑line arguments. The YAML file defines data processing limits, quality thresholds, outlier detection parameters, visualisation settings and logging options.
+
+You can override these defaults by editing `config.yaml` or setting environment variables such as `DEEPLINE_OUTPUT_DIR`, `DEEPLINE_LOG_LEVEL` and `DEEPLINE_MAX_WORKERS`. See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for detailed explanations and tuning examples.
+
+## 🏃‍♂️ **Usage**
+
+### **Upload a dataset**
+Use the Master Orchestrator's dataset upload endpoint to add a CSV file:
+
+```bash
+curl -X POST "http://localhost:8000/datasets/upload" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@your_dataset.csv" \
+  -F "name=my_dataset"
+```
+
+### **Start a workflow**
+Define a workflow with a list of tasks (agent, action and arguments) and send it to the orchestrator:
+
+```bash
+curl -X POST "http://localhost:8000/workflows/start" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "run_name": "eda_analysis",
+        "tasks": [
+          {
+            "agent": "eda_agent",
+            "action": "load_data",
+            "args": {"path": "your_dataset.csv", "name": "my_dataset"}
+          },
+          {
+            "agent": "eda_agent",
+            "action": "create_visualization",
+            "args": {"name": "my_dataset", "chart_type": "correlation"}
+          }
+        ]
+      }'
+```
+
+The response will include a `run_id` that can be used to poll status via `GET /runs/{run_id}/status` or fetch artefacts via `GET /runs/{run_id}/artifacts`.
+
+### **Use the Hybrid API**
+To translate natural language into DSL asynchronously:
+
 ```bash
 # Submit translation request
 curl -X POST "http://localhost:8000/workflows/translate" \
   -H "Content-Type: application/json" \
   -d '{"text": "Create a workflow that processes data and generates reports"}'
 
-# Poll for results
+# Poll translation status
 curl "http://localhost:8000/translation/{token}"
 ```
 
-### **📊 Automated Data Analysis**
-- **Exploratory Data Analysis** - Automated insights, visualizations, and data quality reports
-- **Schema Inference** - Automatic data type detection and validation
-- **Outlier Detection** - Multiple algorithms (IQR, Isolation Forest, LOF)
-- **Missing Data Analysis** - Pattern detection and imputation strategies
+Once the translation is completed you will receive a DSL description of the workflow, which can be executed via `POST /workflows/dsl`.
 
-### **🤖 Machine Learning Workflows**
-- **Class Imbalance Handling** - SMOTE, ADASYN, and other sampling strategies
-- **Model Training** - Cross-validation, hyperparameter tuning, and overfitting detection
-- **Baseline Models** - Random, majority, and naïve Bayes baselines
-- **Experiment Tracking** - MLflow integration for reproducibility
+### **Explore the API**
+Each FastAPI service exposes interactive API documentation at `/docs` (Swagger UI) and `/redoc`. The main endpoints are listed in `mcp-server/PRODUCTION_DEPLOYMENT_SUMMARY.md`.
 
-### **🛡️ Production Reliability**
-- **Deadlock Detection** - Automatic identification and recovery from stuck workflows
-- **Graceful Cancellation** - Multi-endpoint API for workflow management
-- **Retry Logic** - Configurable retry policies with exponential backoff
-- **SLA Monitoring** - Performance tracking and timeout management
+### **Observability dashboard**
+Navigate to http://localhost:3000 to open the React dashboard. It provides real‑time charts of event activity, recent runs and a live feed of Kafka events.
 
-### **📈 Real-Time Observability**
-- **Live Dashboard** - React-based monitoring interface
-- **Metrics Collection** - Prometheus integration for system metrics
-- **Event Streaming** - Kafka-based real-time event processing
-- **Health Monitoring** - Comprehensive health checks and alerting
+## ⚙️ **Customisation & Extension**
 
-## 🚀 **Installation Instructions**
+The platform is built with extensibility in mind:
 
-### **Prerequisites**
-- **Python** 3.12 or higher
-- **Docker** and Docker Compose
-- **Redis** 6.0+ (or Docker)
-- **MongoDB** 5.0+ (or Docker)
-- **Kafka** (optional, for advanced event streaming)
+- **Add new agents**: implement a FastAPI microservice with the desired functionality, register its URL in `master_orchestrator_api.get_agent_url` and define tasks referencing the new agent.
 
-### **Quick Start**
+- **Tune analysis**: adjust thresholds and sample sizes in `config.yaml` or override via environment variables.
 
-#### **1. Clone Repository**
-```bash
-git clone https://github.com/your-org/deepline.git
-cd deepline
-```
+- **Add visualisations or metrics**: extend the EDA Agent functions and update the API models in `eda_agent.py`.
 
-#### **2. Start Infrastructure Services**
-```bash
-# Start Redis, MongoDB, and Kafka
-docker-compose up -d
-```
+- **Scale services**: deploy multiple instances behind the provided Nginx load balancer and use Docker/Kubernetes for orchestration.
 
-#### **3. Install Dependencies**
-```bash
-cd mcp-server
-pip install -r requirements-exact.txt
-```
+## 📄 **License**
 
-#### **4. Configure Environment**
-```bash
-# Copy and edit configuration
-cp config.yaml.example config.yaml
-# Edit config.yaml with your settings
-```
+Deepline uses a hybrid licensing model to balance open innovation with sustainability:
 
-#### **5. Start Services**
-```bash
-# Start the orchestrator
-python master_orchestrator_api.py
+- **Apache 2.0** for SDKs, client libraries, examples and documentation – commercial use, modification and redistribution are permitted.
 
-# Start the dashboard (optional)
-cd ../dashboard
-npm install
-npm start
-```
+- **Business Source License 1.1 (BUSL)** for the core server – free for non‑commercial use; commercial use or redistribution requires a licence agreement. The BUSL portion automatically converts to Apache 2.0 three years after release.
 
-### **Development Setup**
-```bash
-# Install with development tools
-pip install -r requirements-exact.txt
-pip install pytest black ruff mypy
-
-# Run tests
-python -m pytest tests/ -v
-
-# Format code
-black .
-ruff check .
-```
-
-## 📦 **Dependencies**
-
-### **Core Framework**
-- **FastAPI** - Modern web framework for building APIs
-- **Pydantic** - Data validation and settings management
-- **MCP** - Model Context Protocol for AI model interactions
-
-### **Data Science & ML**
-- **pandas** - Data manipulation and analysis
-- **numpy** - Numerical computing
-- **scikit-learn** - Machine learning algorithms
-- **scipy** - Scientific computing
-- **evidently** - ML model monitoring
-- **ydata-profiling** - Automated data quality reports
-
-### **Infrastructure**
-- **Redis** - Caching and message queuing
-- **MongoDB** - Document database for workflow state
-- **Kafka** - Event streaming (optional)
-- **Prometheus** - Metrics collection
-
-### **Development & Monitoring**
-- **OpenTelemetry** - Distributed tracing
-- **MLflow** - Experiment tracking
-- **Docker** - Containerization
-- **React** - Frontend dashboard
-
-### **External Services (Optional)**
-- **OpenAI API** - LLM integration for translation
-- **Claude API** - Alternative LLM provider
-- **Slack/PagerDuty** - Alerting and notifications
-
-## 🔧 **Configuration**
-
-### **Environment Variables**
-```bash
-# LLM Configuration
-OPENAI_API_KEY=your_openai_key
-CLAUDE_API_KEY=your_claude_key
-
-# Infrastructure
-REDIS_URL=redis://localhost:6379
-MONGODB_URL=mongodb://localhost:27017
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-
-# Security
-SECRET_KEY=your_secret_key
-RATE_LIMIT_REQUESTS_PER_MINUTE=60
-```
-
-### **Configuration File (`config.yaml`)**
-```yaml
-master_orchestrator:
-  llm:
-    model_version: "claude-3-sonnet-20240229"
-    max_input_length: 10000
-    temperature: 0.0
-  
-  orchestrator:
-    max_concurrent_workflows: 10
-    deadlock:
-      check_interval_s: 60
-      pending_stale_s: 900
-      cancel_on_deadlock: true
-    
-    retry:
-      max_retries: 3
-      backoff_base_s: 30
-```
-
-## 📊 **Usage Examples**
-
-### **Basic Workflow Execution**
-```python
-import requests
-
-# Submit workflow
-response = requests.post("http://localhost:8000/workflows/dsl", json={
-    "dsl": """
-    workflow:
-      name: data_analysis_workflow
-      tasks:
-        - name: load_data
-          agent: eda
-          action: load_data
-          params: {"file": "data.csv"}
-        - name: analyze_data
-          agent: eda
-          action: analyze_data
-          depends_on: [load_data]
-    """,
-    "client_id": "client123"
-})
-
-run_id = response.json()["run_id"]
-
-# Check status
-status = requests.get(f"http://localhost:8000/runs/{run_id}/status")
-print(status.json())
-```
-
-### **Natural Language Workflow**
-```python
-# Submit natural language request
-response = requests.post("http://localhost:8000/workflows/translate", json={
-    "text": "Analyze the customer data, detect outliers, and train a classification model",
-    "client_id": "client123"
-})
-
-token = response.json()["token"]
-
-# Poll for completion
-while True:
-    result = requests.get(f"http://localhost:8000/translation/{token}")
-    if result.json()["status"] == "done":
-        dsl = result.json()["dsl"]
-        break
-    time.sleep(5)
-```
-
-### **Workflow Cancellation**
-```python
-# Cancel a running workflow
-requests.put(f"http://localhost:8000/runs/{run_id}/cancel", json={
-    "reason": "user-requested",
-    "force": False
-})
-```
-
-## 📁 **Project Structure**
-
-```
-Deepline/
-├── mcp-server/                          # Core orchestration engine
-│   ├── api/                            # FastAPI routers
-│   │   ├── hybrid_router.py           # Translation API endpoints
-│   │   ├── cancel_router.py           # Cancellation API endpoints
-│   │   └── agent_router.py            # Agent management endpoints
-│   ├── orchestrator/                   # Core orchestration logic
-│   │   ├── translation_queue.py       # Async translation system
-│   │   ├── workflow_manager.py        # Workflow lifecycle management
-│   │   ├── deadlock_monitor.py        # Deadlock detection & recovery
-│   │   ├── guards.py                  # Security & rate limiting
-│   │   └── sla_monitor.py             # SLA tracking
-│   ├── workflow_engine/               # Task execution engine
-│   │   ├── scheduler.py               # Priority-based task scheduling
-│   │   ├── worker_pool.py             # Worker management with cancellation
-│   │   └── retry_tracker.py           # Retry logic with Redis
-│   ├── agents/                        # AI agent implementations
-│   │   ├── eda_agent.py              # Exploratory Data Analysis
-│   │   ├── ml_agent.py               # Machine Learning workflows
-│   │   ├── refinery_agent.py         # Data quality & monitoring
-│   │   └── custom_agent.py           # Extensible agent framework
-│   ├── config.py                      # Configuration management
-│   ├── config.yaml                    # System configuration
-│   └── master_orchestrator_api.py     # Main FastAPI application
-├── dashboard/                         # React-based monitoring UI
-│   ├── backend/                      # FastAPI backend for dashboard
-│   └── dashboard-frontend/           # React frontend
-├── docs/                             # Comprehensive documentation
-│   ├── DEADLOCK_MONITORING.md        # Deadlock system guide
-│   ├── USER_GUIDE.md                 # User documentation
-│   ├── INSTALLATION.md               # Setup instructions
-│   ├── CONFIGURATION.md              # Configuration guide
-│   └── CONTRIBUTING.md               # Development guidelines
-├── docker-compose.yml                # Container orchestration
-├── requirements-exact.txt            # Exact dependency versions
-├── pyproject.toml                    # Project metadata
-└── README.md                         # This file
-```
-
-## 📄 **Licensing**
-
-Deepline uses a hybrid license approach to balance open innovation with business sustainability:
-
-### **🔓 Apache 2.0 - SDK/Client Components**
-**Components covered:**
-- Client SDKs and libraries
-- Integration examples
-- Documentation and tutorials
-- Testing frameworks
-- Development tools
-
-**You can:**
-- ✅ Use commercially without restrictions
-- ✅ Modify and distribute freely
-- ✅ Create derivative works
-- ✅ Grant patent rights
-- ✅ Sell products using these components
-
-### **🛡️ BUSL 1.1 - Core Server**
-**Components covered:**
-- Main MCP server and core orchestration engine
-- Core analysis tools and algorithms
-- Data processing pipeline
-- Quality assessment engines
-- Model performance monitoring
-
-**You can:**
-- ✅ Use for development and testing
-- ✅ Use for non-commercial purposes
-- ✅ Modify for internal use
-- ✅ Contribute back to the project
-- ⚠️ Commercial use requires agreement
-
-**Restrictions:**
-- ❌ Cannot use in competing commercial products
-- ❌ Cannot offer as a service without permission
-- ❌ Cannot redistribute commercially
-
-### **🔄 Automatic Conversion**
-**After 3 years (≈ 2027):**
-- Core components automatically convert to Apache 2.0
-- Full open-source availability
-- No commercial restrictions
-- Complete ecosystem freedom
-
-For commercial licensing inquiries, contact: **licensing@deepline.ai**
+For full terms see [LICENSE.md](LICENSE.md), [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-BUSL](LICENSE-BUSL). If you plan to build a commercial product or deploy Deepline for customers, please contact the maintainers at **licensing@deepline.ai**.
 
 ## 🤝 **Contributing**
 
-We welcome contributions! Please see our [Contributing Guide](docs/CONTRIBUTING.md) for details on:
+We welcome contributions from the community! To get started:
 
-- **Code Style** - Black formatting, Ruff linting, MyPy type checking
-- **Testing** - Comprehensive test coverage with pytest
-- **Documentation** - Clear docstrings and updated guides
-- **Pull Request Process** - Review guidelines and merge criteria
-- **Development Setup** - Local development environment
+1. **Fork this repository** and clone your fork locally
+2. **Create a virtual environment** and install development dependencies (`pip install -r requirements-python313.txt` plus `pytest`, `black`, `ruff`, `mypy`)
+3. **Create a feature branch** (`git checkout -b feature/your-feature`)
+4. **Write clear, well‑tested code** and adhere to the PEP 8 style. Use Black for formatting, Ruff for linting and MyPy for type checking
+5. **Run tests** using pytest and ensure all tests pass before submitting a pull request
+6. **Submit a PR** with a clear description and reference any related issues or features
 
-### **Development Workflow**
-```bash
-# Fork and clone
-git clone https://github.com/your-username/deepline.git
-cd deepline
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines on code style, commit message format, testing strategy and the PR checklist.
 
-# Create feature branch
-git checkout -b feature/amazing-feature
+## 📚 **Documentation & Examples**
 
-# Install development dependencies
-pip install -r requirements-exact.txt
-pip install pytest black ruff mypy
+Deepline includes extensive documentation in the `docs/` directory:
 
-# Make changes and test
-python -m pytest tests/ -v
-black .
-ruff check .
+- **[Installation Guide](docs/INSTALLATION.md)** – step‑by‑step setup instructions including Windows‑specific steps and verification procedures
+- **[Configuration Guide](docs/CONFIGURATION.md)** – description of the YAML configuration and environment variables with tuning tips
+- **[Examples & Use Cases](docs/EXAMPLES.md)** – a collection of practical workflows and advanced scenarios to try out
+- **[Hybrid API Documentation](docs/HYBRID_API.md)** – full specification of the async translation API including request/response formats
+- **[Connectivity Test Report](docs/CONNECTIVITY_TEST_REPORT.md)** – record of a comprehensive connectivity test demonstrating 100% success and highlighting fallback mechanisms for missing infrastructure
 
-# Commit and push
-git commit -m "Add amazing feature"
-git push origin feature/amazing-feature
-```
+Refer to these documents to deepen your understanding of the system.
 
-## 📞 **Contact & Support**
+## 🛠️ **Troubleshooting & Support**
 
-### **Technical Support**
-- **GitHub Issues**: [Report bugs and feature requests](https://github.com/your-org/deepline/issues)
-- **Discussions**: [Community support](https://github.com/your-org/deepline/discussions)
-- **Documentation**: [Complete guides](https://deepline.ai/docs)
+Common issues and fixes are documented in the various guides:
 
-### **Commercial Support**
-- **Licensing**: licensing@deepline.ai
-- **Partnerships**: partnerships@deepline.ai
-- **Enterprise**: enterprise@deepline.ai
+- **WebSocket or API failures**: ensure that the backend services are running on the correct ports and that CORS settings permit your client origin
+- **Missing data or charts not rendering**: verify MongoDB connectivity and that Kafka topics contain events
+- **Port conflicts**: change the port arguments when launching uvicorn or set the PORT environment variable for React
 
-### **Community**
-- **Discord**: [Join our community](https://discord.gg/deepline)
-- **Twitter**: [@deepline_ai](https://twitter.com/deepline_ai)
-- **Blog**: [Latest updates](https://deepline.ai/blog)
+For further assistance, please open an issue on the GitHub repository or start a discussion. License questions should be directed to **licensing@deepline.ai**.
 
-## 🏆 **Production Status**
+## 📌 **Roadmap**
 
-**✅ PRODUCTION READY** - Version 2.1.0
+Upcoming features and enhancements include JWT authentication, advanced rate limiting, real‑time notifications, machine‑learning model agents, enhanced monitoring, Kubernetes deployment and multi‑tenant support. See [CHANGELOG.md](CHANGELOG.md) for a history of changes and planned features.
 
-The Deepline platform is production-ready with:
-- ✅ Comprehensive testing and validation
-- ✅ Deadlock monitoring and graceful cancellation
-- ✅ Hybrid API with async translation workflows
-- ✅ Complete workflow engine with retry logic
-- ✅ Security and rate limiting
-- ✅ Real-time monitoring and alerting
-- ✅ Extensive documentation and examples
-- ✅ Enterprise-grade reliability and scalability
+## 🧾 **Acknowledgements**
 
-**Ready for enterprise deployment!** 🚀
+Deepline builds upon open‑source libraries such as FastAPI, Pandas, scikit‑learn, NumPy and many others. We thank their maintainers and contributors for their efforts. The project also draws inspiration from best practices in modern MLOps and data engineering.
 
 ---
 
