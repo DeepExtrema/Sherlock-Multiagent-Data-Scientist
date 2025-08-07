@@ -46,8 +46,8 @@ Together, these components form a scalable microservices architecture capable of
 ║  • /translation/{token} – polling   ║               │
 ║  • /runs/{id}/cancel – cancellation ║               │
 ╚═══════════════╤═════════════════════╝               │
-                │ validated DSL                      │
-                ▼                                    │
+                │ validated DSL                       │
+                ▼                                     │
 ╔═══════════════════════════════════════════════════════╗
 ║         Master Orchestrator Service (FastAPI)         ║
 ║  • Workflow management, scheduling & tracking         ║
