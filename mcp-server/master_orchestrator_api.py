@@ -88,7 +88,8 @@ artifacts = {}
 run_status = {}
 
 # Configuration
-EDA_AGENT_URL = "http://localhost:8001"
+# Prefer environment variable inside containers; default to localhost for local dev
+EDA_AGENT_URL = os.getenv("EDA_AGENT_URL", "http://localhost:8001")
 UPLOAD_DIR = "uploads"
 ARTIFACT_DIR = "artifacts"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
