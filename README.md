@@ -37,8 +37,8 @@ Together, these components form a scalable microservices architecture capable of
 ┌───────────────────────────────┐    ┌────────────────────────────────┐
 │            Clients            │    │        Observability UI        │
 │  (CLI, SDKs, React dashboard) │    │    (React + Recharts)          │
-└───────────────┬───────────────┘    └────────────────┬───────────────┘
-                │ REST / WebSocket                    │
+└────────────────┬──────────────┘    └────────────────┬───────────────┘
+                 │   REST / WebSocket                 │
 ╔════════════════▼════════════════════╗               │
 ║      API Layer – FastAPI app        ║               │
 ║  • /workflows/dsl   – DSL executor  ║               │
