@@ -292,3 +292,52 @@ agent_routing:
   mode: "header"      # header | topic
   default_topic: "task.requests"     # header mode
   topic_prefix: "task.requests."     # topic mode 
+
+# Data Sources & Governance & Versioning
+data_sources:
+  registry_backend: "memory"   # memory | redis | sqlite
+  http_defaults:
+    timeout_s: 30
+    max_retries: 3
+    backoff_base_s: 1
+    headers:
+      User-Agent: "Deepline-Data-Agent/1.0"
+  allowed_stream_protocols: ["kafka", "mqtt", "websocket"]
+  # Example templates (for reference/documentation)
+  templates:
+    api:
+      name: "github"
+      base_url: "https://api.github.com"
+    db_dump:
+      name: "sales_q3"
+      location: "s3://my-bucket/sales_q3.parquet"
+      format: "parquet"
+    stream:
+      name: "orders"
+      protocol: "kafka"
+      endpoint: "localhost:9092"
+      topic: "orders.events"
+
+governance:
+  enabled: true
+  license_required: false
+  pii_scan_on_upload: true
+  audit:
+    log_level: "INFO"
+    destination: "stdout"   # stdout | file
+    file_path: "logs/audit.log"
+  retention_days: 365
+
+versioning:
+  backend: "local"          # local | s3 | lakefs
+  local_dir: "snapshots"
+  s3:
+    bucket: ""
+    prefix: "snapshots/"
+    enable_object_versioning: false
+  lakefs:
+    endpoint: ""
+    repo: ""
+    branch: "main"
+    access_key: "${LAKEFS_ACCESS_KEY}"
+    secret_key: "${LAKEFS_SECRET_KEY}"
