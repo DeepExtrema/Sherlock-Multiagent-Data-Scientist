@@ -7,3 +7,5 @@ m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
 print('APP_PRESENT', hasattr(m, 'app'))
 
+
+

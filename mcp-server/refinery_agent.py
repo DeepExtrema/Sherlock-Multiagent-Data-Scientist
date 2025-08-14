@@ -35,6 +35,9 @@ try:
     FE_MODULE_AVAILABLE = True
 except ImportError:
     FE_MODULE_AVAILABLE = False
+    # Fallback typings so annotations don't break at runtime
+    from typing import Any as PipelineCtx  # type: ignore
+    PipelineContextManager = None  # type: ignore
     logging.warning("FE module not available - advanced features disabled")
 
 
@@ -53,12 +56,63 @@ app = FastAPI(
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])  # Configure per environment
 # app.add_middleware(HTTPSRedirectMiddleware)  # Uncomment for HTTPS-only
 
-# Prometheus metrics (multiprocess-safe for gunicorn)
-REQUEST_COUNT = Counter('refinery_requests_total', 'Total requests', ['action', 'mode', 'backend', 'status'], multiprocess_mode='livesum')
-REQUEST_DURATION = Histogram('refinery_request_duration_seconds', 'Request duration', ['action', 'mode', 'backend'], multiprocess_mode='livesum')
-ACTIVE_PIPELINES = Gauge('refinery_active_pipelines', 'Number of active pipelines', multiprocess_mode='livesum')
-DATASET_SIZE = Histogram('refinery_dataset_size_rows', 'Dataset size in rows', ['action', 'mode', 'backend'], multiprocess_mode='livesum')
-FE_MODULE_USAGE = Counter('fe_module_usage_total', 'FE module usage', ['action', 'complexity'], multiprocess_mode='livesum')
+# Prometheus metrics (compatibility with versions without multiprocess support)
+try:
+    REQUEST_COUNT = Counter(
+        'refinery_requests_total',
+        'Total requests',
+        ['action', 'mode', 'backend', 'status'],
+        multiprocess_mode='livesum'
+    )
+    REQUEST_DURATION = Histogram(
+        'refinery_request_duration_seconds',
+        'Request duration',
+        ['action', 'mode', 'backend'],
+        multiprocess_mode='livesum'
+    )
+    ACTIVE_PIPELINES = Gauge(
+        'refinery_active_pipelines',
+        'Number of active pipelines',
+        multiprocess_mode='livesum'
+    )
+    DATASET_SIZE = Histogram(
+        'refinery_dataset_size_rows',
+        'Dataset size in rows',
+        ['action', 'mode', 'backend'],
+        multiprocess_mode='livesum'
+    )
+    FE_MODULE_USAGE = Counter(
+        'fe_module_usage_total',
+        'FE module usage',
+        ['action', 'complexity'],
+        multiprocess_mode='livesum'
+    )
+except TypeError:
+    # Fallback for older prometheus_client versions
+    REQUEST_COUNT = Counter(
+        'refinery_requests_total',
+        'Total requests',
+        ['action', 'mode', 'backend', 'status']
+    )
+    REQUEST_DURATION = Histogram(
+        'refinery_request_duration_seconds',
+        'Request duration',
+        ['action', 'mode', 'backend']
+    )
+    ACTIVE_PIPELINES = Gauge(
+        'refinery_active_pipelines',
+        'Number of active pipelines'
+    )
+    DATASET_SIZE = Histogram(
+        'refinery_dataset_size_rows',
+        'Dataset size in rows',
+        ['action', 'mode', 'backend']
+    )
+    FE_MODULE_USAGE = Counter(
+        'fe_module_usage_total',
+        'FE module usage',
+        ['action', 'complexity']
+    )
 
 # Configuration from environment
 DRIFT_NUMERIC_P95_THRESHOLD = float(os.getenv('DRIFT_NUMERIC_P95_THRESHOLD', '0.1'))
