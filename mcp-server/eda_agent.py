@@ -28,8 +28,14 @@ import seaborn as sns
 from scipy import stats
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
-import redis.asyncio as redis
-from motor.motor_asyncio import AsyncIOMotorClient
+try:
+    import redis.asyncio as redis
+except Exception:  # pragma: no cover
+    redis = None
+try:
+    from motor.motor_asyncio import AsyncIOMotorClient
+except Exception:  # pragma: no cover
+    AsyncIOMotorClient = None
 import yaml
 
 # Configure logging
@@ -54,8 +60,8 @@ app.add_middleware(
 
 # Global state
 data_store: Dict[str, pd.DataFrame] = {}
-redis_client: Optional[redis.Redis] = None
-mongo_client: Optional[AsyncIOMotorClient] = None
+redis_client: Optional[Any] = None
+mongo_client: Optional[Any] = None
 telemetry_data: Dict[str, Any] = {}
 
 # Configuration
@@ -719,19 +725,23 @@ async def startup_event():
     global redis_client, mongo_client
     
     try:
-        # Initialize Redis connection
-        redis_client = redis.from_url(Config.REDIS_URL)
-        await redis_client.ping()
-        logger.info("Redis connection established")
+        if redis is not None:
+            redis_client = redis.from_url(Config.REDIS_URL)
+            await redis_client.ping()
+            logger.info("Redis connection established")
+        else:
+            logger.warning("Redis library not available; skipping Redis initialization")
     except Exception as e:
         logger.warning(f"Redis connection failed: {e}")
         redis_client = None
     
     try:
-        # Initialize MongoDB connection
-        mongo_client = AsyncIOMotorClient(Config.MONGO_URL)
-        await mongo_client.admin.command('ping')
-        logger.info("MongoDB connection established")
+        if AsyncIOMotorClient is not None:
+            mongo_client = AsyncIOMotorClient(Config.MONGO_URL)
+            await mongo_client.admin.command('ping')
+            logger.info("MongoDB connection established")
+        else:
+            logger.warning("Motor/PyMongo not available; skipping MongoDB initialization")
     except Exception as e:
         logger.warning(f"MongoDB connection failed: {e}")
         mongo_client = None
@@ -742,7 +752,10 @@ async def shutdown_event():
     global redis_client, mongo_client
     
     if redis_client:
-        await redis_client.close()
+        try:
+            await redis_client.close()
+        except Exception:
+            pass
         logger.info("Redis connection closed")
     
     if mongo_client:

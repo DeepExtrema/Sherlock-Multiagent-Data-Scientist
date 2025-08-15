@@ -22,6 +22,17 @@ from pathlib import Path
 import requests
 from datetime import datetime
 import logging
+import sys
+from pathlib import Path
+# Ensure local packages are importable
+CURRENT_DIR = Path(__file__).parent
+if str(CURRENT_DIR) not in sys.path:
+    sys.path.insert(0, str(CURRENT_DIR))
+
+# Routers
+from api.data_router import create_data_router
+from api.agent_router import create_agent_router
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -44,6 +55,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount feature routers
+app.include_router(create_data_router())
+app.include_router(create_agent_router())
 
 # ─── DATA MODELS ──────────────────────────────────────────────────────────────
 
@@ -88,7 +103,8 @@ artifacts = {}
 run_status = {}
 
 # Configuration
-EDA_AGENT_URL = "http://localhost:8001"
+# Prefer environment variable inside containers; default to localhost for local dev
+EDA_AGENT_URL = os.getenv("EDA_AGENT_URL", "http://localhost:8001")
 UPLOAD_DIR = "uploads"
 ARTIFACT_DIR = "artifacts"
 os.makedirs(UPLOAD_DIR, exist_ok=True)

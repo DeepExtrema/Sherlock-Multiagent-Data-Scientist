@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  eda-agent:
+    build: .
+    command: ["python", "start_eda_service.py"]
+    ports:
+      - "8001:8001"
+    environment:
+      - ENVIRONMENT=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  master-orchestrator:
+    build: .
+    command: ["python", "start_master_orchestrator.py"]
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - EDA_AGENT_URL=http://eda-agent:8001
+      - REFINERY_AGENT_URL=http://refinery-agent:8005
+    depends_on:
+      - eda-agent
+      - refinery-agent
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - master-orchestrator
+      - eda-agent
+      - refinery-agent
+    restart: unless-stopped
+
+  refinery-agent:
+    build:
+      context: .
+      dockerfile: refinery_agent.Dockerfile
+    ports:
+      - "8005:8005"
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_URL=redis://redis:6379
+      - MONGO_URL=mongodb://mongo:27017
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
