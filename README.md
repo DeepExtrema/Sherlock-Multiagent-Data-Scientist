@@ -1,19 +1,19 @@
-# Deepline – The End‑to‑End MLOps Powerhouse
+# Sherlock – The End‑to‑End Data Science Powerhouse
 
 [![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0%20%7C%20BUSL%201.1-green.svg)](LICENSE.md)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)](https://github.com/DeepExtrema/Deepline)
-[![Version](https://img.shields.io/badge/Version-2.1.0-orange.svg)](https://github.com/DeepExtrema/Deepline/releases)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)](https://github.com/DeepExtrema/Sherlock)
+[![Version](https://img.shields.io/badge/Version-2.1.0-orange.svg)](https://github.com/DeepExtrema/Sherlock/releases)
 
 **Version**: 2.1.0  
 **Status**: Production ready with deadlock monitoring and graceful cancellation support  
 **Last updated**: January 2024 (see [CHANGELOG.md](CHANGELOG.md) for release notes).
 
-Imagine turning raw data into insights and models in minutes—no code required. Deepline isn't just an orchestration tool; it's your complete data science studio. Start with drag‑and‑drop EDA, where the EDA Agent handles data loading, statistics, missing‑data analysis, outlier detection and stunning, publication‑ready visualisations. Move seamlessly into feature engineering, with configurable pipelines that transform, encode and select the best features—all through an intuitive interface. Finally, fire up model training via built‑in, no‑code workflows that leverage the MLOps engine to train and evaluate models on the fly.
+Imagine turning raw data into insights and models in minutes—no code required. Sherlock isn't just an orchestration tool; it's your complete Data Science studio. Start with drag‑and‑drop EDA, where the EDA Agent handles data loading, statistics, missing‑data analysis, outlier detection and stunning, publication‑ready visualisations. Move seamlessly into feature engineering, with configurable pipelines that transform, encode and select the best features—all through an intuitive interface. Finally, fire up model training via built‑in, no‑code workflows that leverage the Data Science engine to train and evaluate models on the fly.
 
-At its core, Deepline harnesses a Master Orchestrator that orchestrates every task—dispatching them to specialist agents and tracking progress. A Hybrid API lets you describe workflows in plain language and watch them transform into executable pipelines, while deadlock monitors and graceful cancellation keep long-running jobs resilient and safe. Your work is visualised in real time through the observability dashboard, delivering live charts and event streams.
+At its core, Sherlock harnesses a Master Orchestrator that orchestrates every task—dispatching them to specialist agents and tracking progress. A Hybrid API lets you describe workflows in plain language and watch them transform into executable pipelines, while deadlock monitors and graceful cancellation keep long-running jobs resilient and safe. Your work is visualised in real time through the observability dashboard, delivering live charts and event streams.
 
-Whether you're a data enthusiast or a seasoned data scientist, Deepline makes the entire journey—from EDA to feature engineering to model training—feel like magic.
+Whether you're a data enthusiast or a seasoned data scientist, Sherlock makes the entire journey—from EDA to feature engineering to model training—feel like magic.
 
 ## 🏗️ **Architecture Overview**
 
@@ -87,7 +87,7 @@ Additional infrastructure includes MongoDB (for run persistence), Redis (for cac
 
 ## 🛠️ **Tech Stack & Dependencies**
 
-Deepline relies on modern Python and JavaScript ecosystems. Below are the primary dependencies and their minimum versions (for a complete lockfile with hashes see `mcp‑server/requirements.lock`).
+Sherlock relies on modern Python and JavaScript ecosystems. Below are the primary dependencies and their minimum versions (for a complete lockfile with hashes see `mcp‑server/requirements.lock`).
 
 | Category | Key packages (min version) |
 |----------|---------------------------|
@@ -114,16 +114,16 @@ Deepline relies on modern Python and JavaScript ecosystems. Below are the primar
 
 ## 🧑‍💻 **Installation & Setup**
 
-Follow these steps to get Deepline running on your machine. Detailed Windows‑specific instructions are available in [docs/INSTALLATION.md](docs/INSTALLATION.md).
+Follow these steps to get Sherlock running on your machine. Detailed Windows‑specific instructions are available in [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ### **1. Clone the repository**
 ```bash
-git clone https://github.com/DeepExtrema/Deepline.git
-cd Deepline
+git clone https://github.com/DeepExtrema/Sherlock.git
+cd Sherlock
 ```
 
 ### **2. Start infrastructure services**
-Deepline relies on MongoDB, Redis and Kafka. The repository provides a `docker‑compose.yml` in `mcp‑server/` to spin these up quickly.
+Sherlock relies on MongoDB, Redis and Kafka. The repository provides a `docker‑compose.yml` in `mcp‑server/` to spin these up quickly.
 
 ```bash
 cd mcp-server
@@ -144,7 +144,7 @@ source .venv/bin/activate
 pip install -r requirements-python313.txt
 ```
 
-The `requirements-python313.txt` file specifies compatible versions across the data science, machine learning and web frameworks.
+The `requirements-python313.txt` file specifies compatible versions across the Data Science, machine learning and web frameworks.
 
 ### **4. Install Node.js dependencies (dashboard)**
 If you wish to run the real‑time dashboard, install the front‑end dependencies and start the development server:
@@ -183,9 +183,9 @@ docker-compose up -d
 This will build the containers, expose ports 80/443 via Nginx and run health checks.
 
 ### **6. Configuration**
-Deepline reads configuration from `mcp-server/config.yaml`, environment variables and command‑line arguments. The YAML file defines data processing limits, quality thresholds, outlier detection parameters, visualisation settings and logging options.
+Sherlock reads configuration from `mcp-server/config.yaml`, environment variables and command‑line arguments. The YAML file defines data processing limits, quality thresholds, outlier detection parameters, visualisation settings and logging options.
 
-You can override these defaults by editing `config.yaml` or setting environment variables such as `DEEPLINE_OUTPUT_DIR`, `DEEPLINE_LOG_LEVEL` and `DEEPLINE_MAX_WORKERS`. See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for detailed explanations and tuning examples.
+You can override these defaults by editing `config.yaml` or setting environment variables such as `Sherlock_OUTPUT_DIR`, `Sherlock_LOG_LEVEL` and `Sherlock_MAX_WORKERS`. See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for detailed explanations and tuning examples.
 
 ## 🏃‍♂️ **Usage**
 
@@ -259,13 +259,13 @@ The platform is built with extensibility in mind:
 
 ## 📄 **License**
 
-Deepline uses a hybrid licensing model to balance open innovation with sustainability:
+Sherlock uses a hybrid licensing model to balance open innovation with sustainability:
 
 - **Apache 2.0** for SDKs, client libraries, examples and documentation – commercial use, modification and redistribution are permitted.
 
 - **Business Source License 1.1 (BUSL)** for the core server – free for non‑commercial use; commercial use or redistribution requires a licence agreement. The BUSL portion automatically converts to Apache 2.0 three years after release.
 
-For full terms see [LICENSE.md](LICENSE.md), [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-BUSL](LICENSE-BUSL). If you plan to build a commercial product or deploy Deepline for customers, please contact the maintainers at **licensing@deepline.ai**.
+For full terms see [LICENSE.md](LICENSE.md), [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-BUSL](LICENSE-BUSL). If you plan to build a commercial product or deploy Sherlock for customers, please contact the maintainers at **licensing@Sherlock.ai**.
 
 ## 🤝 **Contributing**
 
@@ -282,7 +282,7 @@ See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines on code
 
 ## 📚 **Documentation & Examples**
 
-Deepline includes extensive documentation in the `docs/` directory:
+Sherlock includes extensive documentation in the `docs/` directory:
 
 - **[Installation Guide](docs/INSTALLATION.md)** – step‑by‑step setup instructions including Windows‑specific steps and verification procedures
 - **[Configuration Guide](docs/CONFIGURATION.md)** – description of the YAML configuration and environment variables with tuning tips
@@ -300,7 +300,7 @@ Common issues and fixes are documented in the various guides:
 - **Missing data or charts not rendering**: verify MongoDB connectivity and that Kafka topics contain events
 - **Port conflicts**: change the port arguments when launching uvicorn or set the PORT environment variable for React
 
-For further assistance, please open an issue on the GitHub repository or start a discussion. License questions should be directed to **deeplineanalytics@gmail.com**.
+For further assistance, please open an issue on the GitHub repository or start a discussion. License questions should be directed to **Sherlockanalytics@gmail.com**.
 
 ## 📌 **Roadmap**
 
@@ -308,9 +308,9 @@ Upcoming features and enhancements include JWT authentication, advanced rate lim
 
 ## 🧾 **Acknowledgements**
 
-Deepline builds upon open‑source libraries such as FastAPI, Pandas, scikit‑learn, NumPy and many others. We thank their maintainers and contributors for their efforts. The project also draws inspiration from best practices in modern MLOps and data engineering.
+Sherlock builds upon open‑source libraries such as FastAPI, Pandas, scikit‑learn, NumPy and many others. We thank their maintainers and contributors for their efforts. The project also draws inspiration from best practices in modern Data Science and data engineering.
 
 ---
 
-**© 2024 Deepline. All rights reserved.**  
+**© 2024 Sherlock. All rights reserved.**  
 *Building the future of data analytics through sustainable open source innovation.*
