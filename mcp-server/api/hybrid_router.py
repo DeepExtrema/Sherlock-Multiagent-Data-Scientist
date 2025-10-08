@@ -566,9 +566,10 @@ def create_hybrid_router(
             }
             
         except Exception as e:
+            logger.error("Internal exception during workflow DSL validation", exc_info=True)
             return {
                 "valid": False,
-                "errors": [f"Validation error: {e}"],
+                "errors": ["A validation error occurred."],
                 "warnings": warnings
             }
     
