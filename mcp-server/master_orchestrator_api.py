@@ -24,6 +24,8 @@ from datetime import datetime
 import logging
 import sys
 from pathlib import Path
+# Define root location for artifacts
+ARTIFACTS_DIR = Path("artifacts")  # You may change as appropriate
 # Ensure local packages are importable
 CURRENT_DIR = Path(__file__).parent
 if str(CURRENT_DIR) not in sys.path:
@@ -348,12 +350,14 @@ async def get_run_artifacts(run_id: str):
 @app.get("/artifacts/{run_id}/{filename}")
 async def download_artifact(run_id: str, filename: str):
     """Download a specific artifact file."""
-    # Look for the file in the current directory (where EDA Agent saves them)
-    file_path = Path(filename)
-    
+    # Compose the intended artifact file path within ARTIFACTS_DIR
+    base_dir = ARTIFACTS_DIR / run_id
+    file_path = (base_dir / filename).resolve()
+    # Ensure the file_path is strictly within the artifacts directory
+    if not str(file_path).startswith(str(base_dir.resolve()) + os.sep):
+        raise HTTPException(status_code=403, detail="Invalid artifact path")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Artifact file not found")
-    
     return FileResponse(
         path=file_path,
         filename=filename,
